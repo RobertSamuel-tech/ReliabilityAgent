@@ -1,0 +1,859 @@
+2026-05-26T10:31:29.164+0530	info	otelconftelemetry/tracer.go:47	Internal trace telemetry disabled	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}}
+2026-05-26T10:31:29.172+0530	warn	builders/builders.go:40	"otlphttp" alias is deprecated; use "otlp_http" instead	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "otlphttp/dynatrace", "otelcol.component.kind": "exporter", "otelcol.signal": "traces"}
+2026-05-26T10:31:29.173+0530	info	ottl@v0.152.0/parser_collection.go:646	one or more paths were modified to include their context prefix, please rewrite them accordingly	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "transform/cost", "otelcol.component.kind": "processor", "otelcol.pipeline.id": "traces", "otelcol.signal": "traces", "values": {"[0]": {"original": "set(attributes[\"llm.cost.usd\"], (attributes[\"llm.tokens.input\"] * 0.00000125) + (attributes[\"llm.tokens.output\"] * 0.000005)) where attributes[\"llm.tokens.input\"] != nil", "modified": "set(span.attributes[\"llm.cost.usd\"], (span.attributes[\"llm.tokens.input\"] * 0.00000125) + (span.attributes[\"llm.tokens.output\"] * 0.000005)) where span.attributes[\"llm.tokens.input\"] != nil"}}}
+2026-05-26T10:31:29.173+0530	warn	builders/builders.go:40	"otlphttp" alias is deprecated; use "otlp_http" instead	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "otlphttp/dynatrace", "otelcol.component.kind": "exporter", "otelcol.signal": "logs"}
+2026-05-26T10:31:29.174+0530	warn	builders/builders.go:40	"otlphttp" alias is deprecated; use "otlp_http" instead	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "otlphttp/dynatrace", "otelcol.component.kind": "exporter", "otelcol.signal": "metrics"}
+2026-05-26T10:31:29.174+0530	info	service@v0.152.0/service.go:241	Starting otelcol-contrib...	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "Version": "0.152.0", "NumCPU": 12}
+2026-05-26T10:31:29.175+0530	info	extensions/extensions.go:41	Starting extensions...	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}}
+2026-05-26T10:31:29.175+0530	info	internal/resourcedetection.go:154	began detecting resource information	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "resourcedetection/gcp", "otelcol.component.kind": "processor", "otelcol.pipeline.id": "traces", "otelcol.signal": "traces"}
+2026-05-26T10:31:43.259+0530	info	internal/resourcedetection.go:209	detected resource information	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "resourcedetection/gcp", "otelcol.component.kind": "processor", "otelcol.pipeline.id": "traces", "otelcol.signal": "traces", "resource": {}}
+2026-05-26T10:31:43.260+0530	info	otlpreceiver@v0.152.0/otlp.go:120	Starting GRPC server	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "otlp", "otelcol.component.kind": "receiver", "endpoint": "127.0.0.1:4317"}
+2026-05-26T10:31:43.260+0530	info	otlpreceiver@v0.152.0/otlp.go:175	Starting HTTP server	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "otlp", "otelcol.component.kind": "receiver", "endpoint": "127.0.0.1:4318"}
+2026-05-26T10:31:43.261+0530	info	internal/resourcedetection.go:154	began detecting resource information	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "resourcedetection/gcp", "otelcol.component.kind": "processor", "otelcol.pipeline.id": "traces", "otelcol.signal": "traces"}
+2026-05-26T10:31:55.994+0530	info	internal/resourcedetection.go:209	detected resource information	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "resourcedetection/gcp", "otelcol.component.kind": "processor", "otelcol.pipeline.id": "traces", "otelcol.signal": "traces", "resource": {}}
+2026-05-26T10:31:55.994+0530	info	internal/resourcedetection.go:154	began detecting resource information	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "resourcedetection/gcp", "otelcol.component.kind": "processor", "otelcol.pipeline.id": "traces", "otelcol.signal": "traces"}
+2026-05-26T10:32:10.412+0530	info	internal/resourcedetection.go:209	detected resource information	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "resourcedetection/gcp", "otelcol.component.kind": "processor", "otelcol.pipeline.id": "traces", "otelcol.signal": "traces", "resource": {}}
+2026-05-26T10:32:10.415+0530	info	service@v0.152.0/service.go:264	Everything is ready. Begin running and processing data.	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}}
+2026-05-26T10:32:49.182+0530	info	Traces	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "debug", "otelcol.component.kind": "exporter", "otelcol.signal": "traces", "resource spans": 1, "spans": 1}
+2026-05-26T10:32:49.184+0530	info	ResourceSpans #0
+Resource SchemaURL: 
+Resource attributes:
+     -> telemetry.sdk.language: Str(python)
+     -> telemetry.sdk.name: Str(opentelemetry)
+     -> telemetry.sdk.version: Str(1.42.1)
+     -> service.name: Str(reliability-agent)
+     -> service.version: Str(1.0.0)
+     -> deployment.environment: Str(production)
+     -> gcp.project.id: Str(your-project-id)
+ScopeSpans #0
+ScopeSpans SchemaURL: 
+InstrumentationScope reliability-agent 1.0.0
+Span #0
+    Trace ID       : da869e40b3322b4b6ed853089be43399
+    Parent ID      : 
+    ID             : 25f1975f09bb9bac
+    Name           : test.collector.pipeline
+    Kind           : Internal
+    Start time     : 2026-05-26 05:02:43.0255232 +0000 UTC
+    End time       : 2026-05-26 05:02:43.0255823 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> hackathon.track: Str(dynatrace)
+     -> llm.tokens.input: Int(1000)
+     -> llm.tokens.output: Int(500)
+     -> test.source: Str(test_collector)
+     -> llm.cost.usd: Double(0.00375)
+	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "debug", "otelcol.component.kind": "exporter", "otelcol.signal": "traces"}
+2026-05-26T10:43:39.246+0530	info	Traces	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "debug", "otelcol.component.kind": "exporter", "otelcol.signal": "traces", "resource spans": 1, "spans": 4}
+2026-05-26T10:43:39.247+0530	info	ResourceSpans #0
+Resource SchemaURL: 
+Resource attributes:
+     -> telemetry.sdk.language: Str(python)
+     -> telemetry.sdk.name: Str(opentelemetry)
+     -> telemetry.sdk.version: Str(1.42.1)
+     -> service.name: Str(reliability-agent)
+     -> service.version: Str(1.0.0)
+     -> deployment.environment: Str(production)
+ScopeSpans #0
+ScopeSpans SchemaURL: 
+InstrumentationScope reliability-agent.incident 1.0.0
+Span #0
+    Trace ID       : 8df9b380590cfab81ed2d08a440479bc
+    Parent ID      : 00e98dc10db3c191
+    ID             : e3017bbed5aeb494
+    Name           : agent.phase.triage
+    Kind           : Internal
+    Start time     : 2026-05-26 05:13:31.8223803 +0000 UTC
+    End time       : 2026-05-26 05:13:32.0226093 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> incident.severity: Str(P1)
+     -> triage.affected_services: Int(3)
+     -> triage.on_call_notified: Bool(true)
+     -> triage.classification: Str(P1-CONFIRMED)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(156)
+     -> llm.tokens.output: Int(62)
+     -> llm.cost.usd: Double(0.000505)
+Span #1
+    Trace ID       : 8df9b380590cfab81ed2d08a440479bc
+    Parent ID      : 153dda70ea79ee5c
+    ID             : 44d9ee2e204df2be
+    Name           : agent.tool.query_logs
+    Kind           : Internal
+    Start time     : 2026-05-26 05:13:32.0228815 +0000 UTC
+    End time       : 2026-05-26 05:13:32.3661522 +0000 UTC
+    Status code    : Error
+    Status message : UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 22: character maps to <undefined>
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> tool.name: Str(query_logs)
+     -> tool.source: Str(gcp-cloud-logging)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(312)
+     -> llm.tokens.output: Int(128)
+     -> llm.cost.usd: Double(0.00103)
+     -> tool.result.count: Int(47)
+     -> tool.result.has_errors: Bool(true)
+     -> tool.result.top_error: Str(DEADLINE_EXCEEDED in checkout.ProcessPayment)
+Events:
+SpanEvent #0
+     -> Name: exception
+     -> Timestamp: 2026-05-26 05:13:32.3661307 +0000 UTC
+     -> DroppedAttributesCount: 0
+     -> Attributes::
+          -> exception.type: Str(UnicodeEncodeError)
+          -> exception.message: Str('charmap' codec can't encode character '\u2192' in position 22: character maps to <undefined>)
+          -> exception.stacktrace: Str(Traceback (most recent call last):
+  File "C:\Users\Admin\AppData\Roaming\Python\Python314\site-packages\opentelemetry\trace\__init__.py", line 608, in use_span
+    yield span
+  File "C:\Users\Admin\AppData\Roaming\Python\Python314\site-packages\opentelemetry\sdk\trace\__init__.py", line 1177, in start_as_current_span
+    yield span
+  File "C:\Users\Admin\Downloads\ReliabilityAgent\tests\test_recursive_incident.py", line 66, in tool_query_logs
+    print(f"    [tool:query_logs] → {result_count} entries | top error: DEADLINE_EXCEEDED")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 22: character maps to <undefined>
+)
+          -> exception.escaped: Str(False)
+Span #2
+    Trace ID       : 8df9b380590cfab81ed2d08a440479bc
+    Parent ID      : 00e98dc10db3c191
+    ID             : 153dda70ea79ee5c
+    Name           : agent.phase.diagnose
+    Kind           : Internal
+    Start time     : 2026-05-26 05:13:32.0227572 +0000 UTC
+    End time       : 2026-05-26 05:13:32.3669167 +0000 UTC
+    Status code    : Error
+    Status message : UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 22: character maps to <undefined>
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> incident.service: Str(payment-gateway)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(512)
+     -> llm.tokens.output: Int(248)
+     -> llm.cost.usd: Double(0.0018800000000000002)
+Events:
+SpanEvent #0
+     -> Name: diagnosis_started
+     -> Timestamp: 2026-05-26 05:13:32.0228179 +0000 UTC
+     -> DroppedAttributesCount: 0
+     -> Attributes::
+          -> incident.id: Str(INC-404-RECURSE)
+          -> tools.planned: Str(query_logs,query_traces,query_metrics)
+SpanEvent #1
+     -> Name: exception
+     -> Timestamp: 2026-05-26 05:13:32.3669047 +0000 UTC
+     -> DroppedAttributesCount: 0
+     -> Attributes::
+          -> exception.type: Str(UnicodeEncodeError)
+          -> exception.message: Str('charmap' codec can't encode character '\u2192' in position 22: character maps to <undefined>)
+          -> exception.stacktrace: Str(Traceback (most recent call last):
+  File "C:\Users\Admin\AppData\Roaming\Python\Python314\site-packages\opentelemetry\trace\__init__.py", line 608, in use_span
+    yield span
+  File "C:\Users\Admin\AppData\Roaming\Python\Python314\site-packages\opentelemetry\sdk\trace\__init__.py", line 1177, in start_as_current_span
+    yield span
+  File "C:\Users\Admin\Downloads\ReliabilityAgent\tests\test_recursive_incident.py", line 176, in run_investigation
+    log_count = tool_query_logs()
+  File "C:\Users\Admin\Downloads\ReliabilityAgent\tests\test_recursive_incident.py", line 66, in tool_query_logs
+    print(f"    [tool:query_logs] → {result_count} entries | top error: DEADLINE_EXCEEDED")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 22: character maps to <undefined>
+)
+          -> exception.escaped: Str(False)
+Span #3
+    Trace ID       : 8df9b380590cfab81ed2d08a440479bc
+    Parent ID      : 
+    ID             : 00e98dc10db3c191
+    Name           : agent.incident.handle
+    Kind           : Internal
+    Start time     : 2026-05-26 05:13:31.8221743 +0000 UTC
+    End time       : 2026-05-26 05:13:32.3676044 +0000 UTC
+    Status code    : Error
+    Status message : UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 22: character maps to <undefined>
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> incident.service: Str(payment-gateway)
+     -> incident.severity: Str(P1)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> agent.version: Str(1.0.0)
+     -> agent.pipeline: Str(recursive-self-check)
+Events:
+SpanEvent #0
+     -> Name: incident_received
+     -> Timestamp: 2026-05-26 05:13:31.8222524 +0000 UTC
+     -> DroppedAttributesCount: 0
+     -> Attributes::
+          -> incident.id: Str(INC-404-RECURSE)
+          -> incident.service: Str(payment-gateway)
+          -> incident.severity: Str(P1)
+          -> source: Str(pagerduty-webhook)
+SpanEvent #1
+     -> Name: exception
+     -> Timestamp: 2026-05-26 05:13:32.3675953 +0000 UTC
+     -> DroppedAttributesCount: 0
+     -> Attributes::
+          -> exception.type: Str(UnicodeEncodeError)
+          -> exception.message: Str('charmap' codec can't encode character '\u2192' in position 22: character maps to <undefined>)
+          -> exception.stacktrace: Str(Traceback (most recent call last):
+  File "C:\Users\Admin\AppData\Roaming\Python\Python314\site-packages\opentelemetry\trace\__init__.py", line 608, in use_span
+    yield span
+  File "C:\Users\Admin\AppData\Roaming\Python\Python314\site-packages\opentelemetry\sdk\trace\__init__.py", line 1177, in start_as_current_span
+    yield span
+  File "C:\Users\Admin\Downloads\ReliabilityAgent\tests\test_recursive_incident.py", line 176, in run_investigation
+    log_count = tool_query_logs()
+  File "C:\Users\Admin\Downloads\ReliabilityAgent\tests\test_recursive_incident.py", line 66, in tool_query_logs
+    print(f"    [tool:query_logs] → {result_count} entries | top error: DEADLINE_EXCEEDED")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 22: character maps to <undefined>
+)
+          -> exception.escaped: Str(False)
+	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "debug", "otelcol.component.kind": "exporter", "otelcol.signal": "traces"}
+2026-05-26T10:43:59.248+0530	info	Traces	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "debug", "otelcol.component.kind": "exporter", "otelcol.signal": "traces", "resource spans": 1, "spans": 10}
+2026-05-26T10:43:59.249+0530	info	ResourceSpans #0
+Resource SchemaURL: 
+Resource attributes:
+     -> telemetry.sdk.language: Str(python)
+     -> telemetry.sdk.name: Str(opentelemetry)
+     -> telemetry.sdk.version: Str(1.42.1)
+     -> service.name: Str(reliability-agent)
+     -> service.version: Str(1.0.0)
+     -> deployment.environment: Str(production)
+ScopeSpans #0
+ScopeSpans SchemaURL: 
+InstrumentationScope reliability-agent.incident 1.0.0
+Span #0
+    Trace ID       : 22a8ae910399c08390e1ce6f153d1698
+    Parent ID      : 9d8f226b4b7c2288
+    ID             : aae260f65622c602
+    Name           : agent.phase.triage
+    Kind           : Internal
+    Start time     : 2026-05-26 05:13:52.6173319 +0000 UTC
+    End time       : 2026-05-26 05:13:52.8178309 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> incident.severity: Str(P1)
+     -> triage.affected_services: Int(3)
+     -> triage.on_call_notified: Bool(true)
+     -> triage.classification: Str(P1-CONFIRMED)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(156)
+     -> llm.tokens.output: Int(62)
+     -> llm.cost.usd: Double(0.000505)
+Span #1
+    Trace ID       : 22a8ae910399c08390e1ce6f153d1698
+    Parent ID      : 864d28fb2b53056d
+    ID             : 7458b57c02ef5296
+    Name           : agent.tool.query_logs
+    Kind           : Internal
+    Start time     : 2026-05-26 05:13:52.8179762 +0000 UTC
+    End time       : 2026-05-26 05:13:53.1184973 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> tool.name: Str(query_logs)
+     -> tool.source: Str(gcp-cloud-logging)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(312)
+     -> llm.tokens.output: Int(128)
+     -> llm.cost.usd: Double(0.00103)
+     -> tool.result.count: Int(47)
+     -> tool.result.has_errors: Bool(true)
+     -> tool.result.top_error: Str(DEADLINE_EXCEEDED in checkout.ProcessPayment)
+Span #2
+    Trace ID       : 22a8ae910399c08390e1ce6f153d1698
+    Parent ID      : 864d28fb2b53056d
+    ID             : 664780de8e514eda
+    Name           : agent.tool.query_traces
+    Kind           : Internal
+    Start time     : 2026-05-26 05:13:53.118613 +0000 UTC
+    End time       : 2026-05-26 05:13:53.5191923 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> tool.name: Str(agent.tool.query_traces)
+     -> tool.source: Str(dynatrace-distributed-traces)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(284)
+     -> llm.tokens.output: Int(95)
+     -> llm.cost.usd: Double(0.00083)
+     -> tool.result.count: Int(23)
+     -> tool.result.p99_latency_ms: Int(4872)
+     -> tool.result.error_rate_pct: Double(34.7)
+Span #3
+    Trace ID       : 22a8ae910399c08390e1ce6f153d1698
+    Parent ID      : 864d28fb2b53056d
+    ID             : a25fd09c629ba127
+    Name           : agent.tool.query_metrics
+    Kind           : Internal
+    Start time     : 2026-05-26 05:13:53.5192727 +0000 UTC
+    End time       : 2026-05-26 05:13:53.7697863 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> tool.name: Str(query_metrics)
+     -> tool.source: Str(dynatrace-metrics)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(198)
+     -> llm.tokens.output: Int(74)
+     -> llm.cost.usd: Double(0.0006175)
+     -> tool.result.count: Int(12)
+     -> tool.result.cpu_spike_pct: Double(94.2)
+     -> tool.result.memory_pressure: Bool(true)
+     -> tool.result.request_drop_pct: Double(28.1)
+Span #4
+    Trace ID       : 22a8ae910399c08390e1ce6f153d1698
+    Parent ID      : 9d8f226b4b7c2288
+    ID             : 864d28fb2b53056d
+    Name           : agent.phase.diagnose
+    Kind           : Internal
+    Start time     : 2026-05-26 05:13:52.8179152 +0000 UTC
+    End time       : 2026-05-26 05:13:53.7698325 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> incident.service: Str(payment-gateway)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(512)
+     -> llm.tokens.output: Int(248)
+     -> llm.cost.usd: Double(0.0018800000000000002)
+     -> investigation.confidence: Double(0.63)
+     -> diagnosis.root_cause_hypothesis: Str(DB connection pool exhaustion under payment surge)
+     -> diagnosis.evidence_count: Int(82)
+Events:
+SpanEvent #0
+     -> Name: diagnosis_started
+     -> Timestamp: 2026-05-26 05:13:52.8179458 +0000 UTC
+     -> DroppedAttributesCount: 0
+     -> Attributes::
+          -> incident.id: Str(INC-404-RECURSE)
+          -> tools.planned: Str(query_logs,query_traces,query_metrics)
+Span #5
+    Trace ID       : 22a8ae910399c08390e1ce6f153d1698
+    Parent ID      : 9d8f226b4b7c2288
+    ID             : fdc2e86623b231ef
+    Name           : agent.phase.self_check
+    Kind           : Internal
+    Start time     : 2026-05-26 05:13:53.7698863 +0000 UTC
+    End time       : 2026-05-26 05:13:54.0703699 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> investigation.confidence: Double(0.63)
+     -> self_check.threshold: Double(0.8)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(420)
+     -> llm.tokens.output: Int(185)
+     -> llm.cost.usd: Double(0.0014500000000000001)
+     -> self_check.score: Double(0.5985)
+     -> self_check.retry_triggered: Bool(true)
+     -> self_check.reason: Str(confidence_below_threshold)
+     -> self_check.missing_coverage: Str(upstream_dependency_traces)
+Events:
+SpanEvent #0
+     -> Name: self_check_failed
+     -> Timestamp: 2026-05-26 05:13:54.0703426 +0000 UTC
+     -> DroppedAttributesCount: 0
+     -> Attributes::
+          -> self_check.score: Double(0.5985)
+          -> self_check.confidence: Double(0.63)
+          -> self_check.threshold: Double(0.8)
+          -> self_check.gap: Str(upstream trace coverage incomplete)
+Span #6
+    Trace ID       : 22a8ae910399c08390e1ce6f153d1698
+    Parent ID      : 83b20499c0a0b101
+    ID             : 8442dc590c4ba15f
+    Name           : agent.tool.query_traces.retry
+    Kind           : Internal
+    Start time     : 2026-05-26 05:13:54.0705053 +0000 UTC
+    End time       : 2026-05-26 05:13:54.4710499 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> tool.name: Str(agent.tool.query_traces.retry)
+     -> tool.source: Str(dynatrace-distributed-traces)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(284)
+     -> llm.tokens.output: Int(95)
+     -> llm.cost.usd: Double(0.00083)
+     -> tool.result.count: Int(23)
+     -> tool.result.p99_latency_ms: Int(4872)
+     -> tool.result.error_rate_pct: Double(34.7)
+Span #7
+    Trace ID       : 22a8ae910399c08390e1ce6f153d1698
+    Parent ID      : 9d8f226b4b7c2288
+    ID             : 83b20499c0a0b101
+    Name           : agent.phase.reinvestigate
+    Kind           : Internal
+    Start time     : 2026-05-26 05:13:54.0704464 +0000 UTC
+    End time       : 2026-05-26 05:13:54.4713048 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> investigation.retry_reason: Str(self_check_confidence_below_threshold)
+     -> investigation.confidence_before_retry: Double(0.63)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(634)
+     -> llm.tokens.output: Int(312)
+     -> llm.cost.usd: Double(0.0023525000000000004)
+     -> investigation.confidence: Double(0.91)
+     -> investigation.confidence_delta: Double(0.28)
+     -> reinvestigation.new_evidence: Str(stripe-api-timeout-cascade)
+     -> reinvestigation.result_count: Int(23)
+Events:
+SpanEvent #0
+     -> Name: reinvestigation_triggered
+     -> Timestamp: 2026-05-26 05:13:54.070474 +0000 UTC
+     -> DroppedAttributesCount: 0
+     -> Attributes::
+          -> trigger: Str(self_check_failure)
+          -> incident.id: Str(INC-404-RECURSE)
+          -> confidence_before: Double(0.63)
+          -> strategy: Str(deep_upstream_trace_analysis)
+Span #8
+    Trace ID       : 22a8ae910399c08390e1ce6f153d1698
+    Parent ID      : 9d8f226b4b7c2288
+    ID             : 1a263d85c2aa7223
+    Name           : agent.phase.final_decision
+    Kind           : Internal
+    Start time     : 2026-05-26 05:13:54.4715195 +0000 UTC
+    End time       : 2026-05-26 05:13:54.4717752 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> incident.service: Str(payment-gateway)
+     -> incident.severity: Str(P1)
+     -> investigation.confidence: Double(0.91)
+     -> investigation.retry_triggered: Bool(true)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(892)
+     -> llm.tokens.output: Int(445)
+     -> llm.cost.usd: Double(0.00334)
+     -> decision.action: Str(escalate_to_stripe_api_team)
+     -> decision.runbook: Str(RB-PAYMENT-UPSTREAM-TIMEOUT)
+     -> decision.root_cause: Str(Stripe API timeout cascade -> DB connection pool exhaustion)
+     -> decision.estimated_ttm_minutes: Int(25)
+Events:
+SpanEvent #0
+     -> Name: final_decision_generated
+     -> Timestamp: 2026-05-26 05:13:54.4716835 +0000 UTC
+     -> DroppedAttributesCount: 0
+     -> Attributes::
+          -> incident.id: Str(INC-404-RECURSE)
+          -> decision.confidence: Double(0.91)
+          -> decision.action: Str(escalate_to_stripe_api_team)
+          -> decision.runbook: Str(RB-PAYMENT-UPSTREAM-TIMEOUT)
+          -> decision.root_cause: Str(Stripe API timeout cascade -> DB connection pool exhaustion)
+Span #9
+    Trace ID       : 22a8ae910399c08390e1ce6f153d1698
+    Parent ID      : 
+    ID             : 9d8f226b4b7c2288
+    Name           : agent.incident.handle
+    Kind           : Internal
+    Start time     : 2026-05-26 05:13:52.6172335 +0000 UTC
+    End time       : 2026-05-26 05:13:54.4720088 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> incident.service: Str(payment-gateway)
+     -> incident.severity: Str(P1)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> agent.version: Str(1.0.0)
+     -> agent.pipeline: Str(recursive-self-check)
+     -> investigation.confidence: Double(0.91)
+     -> investigation.retry_triggered: Bool(true)
+     -> investigation.phases_executed: Int(5)
+     -> llm.tokens.input: Int(2614)
+     -> llm.tokens.output: Int(1252)
+     -> llm.cost.usd: Double(0.009527500000000001)
+Events:
+SpanEvent #0
+     -> Name: incident_received
+     -> Timestamp: 2026-05-26 05:13:52.6172683 +0000 UTC
+     -> DroppedAttributesCount: 0
+     -> Attributes::
+          -> incident.id: Str(INC-404-RECURSE)
+          -> incident.service: Str(payment-gateway)
+          -> incident.severity: Str(P1)
+          -> source: Str(pagerduty-webhook)
+	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "debug", "otelcol.component.kind": "exporter", "otelcol.signal": "traces"}
+2026-05-26T10:44:34.252+0530	info	Traces	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "debug", "otelcol.component.kind": "exporter", "otelcol.signal": "traces", "resource spans": 1, "spans": 10}
+2026-05-26T10:44:34.253+0530	info	ResourceSpans #0
+Resource SchemaURL: 
+Resource attributes:
+     -> telemetry.sdk.language: Str(python)
+     -> telemetry.sdk.name: Str(opentelemetry)
+     -> telemetry.sdk.version: Str(1.42.1)
+     -> service.name: Str(reliability-agent)
+     -> service.version: Str(1.0.0)
+     -> deployment.environment: Str(production)
+ScopeSpans #0
+ScopeSpans SchemaURL: 
+InstrumentationScope reliability-agent.incident 1.0.0
+Span #0
+    Trace ID       : 542a723f4ff237e571011cb4399c0c66
+    Parent ID      : ee772ba350eb1bfe
+    ID             : 7fe8584d2b8d3156
+    Name           : agent.phase.triage
+    Kind           : Internal
+    Start time     : 2026-05-26 05:14:28.7751265 +0000 UTC
+    End time       : 2026-05-26 05:14:28.9753185 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> incident.severity: Str(P1)
+     -> triage.affected_services: Int(3)
+     -> triage.on_call_notified: Bool(true)
+     -> triage.classification: Str(P1-CONFIRMED)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(156)
+     -> llm.tokens.output: Int(62)
+     -> llm.cost.usd: Double(0.000505)
+Span #1
+    Trace ID       : 542a723f4ff237e571011cb4399c0c66
+    Parent ID      : 9bc7748f6bf51733
+    ID             : 28a0889d42f65aff
+    Name           : agent.tool.query_logs
+    Kind           : Internal
+    Start time     : 2026-05-26 05:14:28.9754662 +0000 UTC
+    End time       : 2026-05-26 05:14:29.2757221 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> tool.name: Str(query_logs)
+     -> tool.source: Str(gcp-cloud-logging)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(312)
+     -> llm.tokens.output: Int(128)
+     -> llm.cost.usd: Double(0.00103)
+     -> tool.result.count: Int(47)
+     -> tool.result.has_errors: Bool(true)
+     -> tool.result.top_error: Str(DEADLINE_EXCEEDED in checkout.ProcessPayment)
+Span #2
+    Trace ID       : 542a723f4ff237e571011cb4399c0c66
+    Parent ID      : 9bc7748f6bf51733
+    ID             : 47ee2a696ef790c4
+    Name           : agent.tool.query_traces
+    Kind           : Internal
+    Start time     : 2026-05-26 05:14:29.2759195 +0000 UTC
+    End time       : 2026-05-26 05:14:29.6762668 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> tool.name: Str(agent.tool.query_traces)
+     -> tool.source: Str(dynatrace-distributed-traces)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(284)
+     -> llm.tokens.output: Int(95)
+     -> llm.cost.usd: Double(0.00083)
+     -> tool.result.count: Int(23)
+     -> tool.result.p99_latency_ms: Int(4872)
+     -> tool.result.error_rate_pct: Double(34.7)
+Span #3
+    Trace ID       : 542a723f4ff237e571011cb4399c0c66
+    Parent ID      : 9bc7748f6bf51733
+    ID             : 1856ac66dee3f25b
+    Name           : agent.tool.query_metrics
+    Kind           : Internal
+    Start time     : 2026-05-26 05:14:29.6763502 +0000 UTC
+    End time       : 2026-05-26 05:14:29.9268072 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> tool.name: Str(query_metrics)
+     -> tool.source: Str(dynatrace-metrics)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(198)
+     -> llm.tokens.output: Int(74)
+     -> llm.cost.usd: Double(0.0006175)
+     -> tool.result.count: Int(12)
+     -> tool.result.cpu_spike_pct: Double(94.2)
+     -> tool.result.memory_pressure: Bool(true)
+     -> tool.result.request_drop_pct: Double(28.1)
+Span #4
+    Trace ID       : 542a723f4ff237e571011cb4399c0c66
+    Parent ID      : ee772ba350eb1bfe
+    ID             : 9bc7748f6bf51733
+    Name           : agent.phase.diagnose
+    Kind           : Internal
+    Start time     : 2026-05-26 05:14:28.9754045 +0000 UTC
+    End time       : 2026-05-26 05:14:29.926868 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> incident.service: Str(payment-gateway)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(512)
+     -> llm.tokens.output: Int(248)
+     -> llm.cost.usd: Double(0.0018800000000000002)
+     -> investigation.confidence: Double(0.63)
+     -> diagnosis.root_cause_hypothesis: Str(DB connection pool exhaustion under payment surge)
+     -> diagnosis.evidence_count: Int(82)
+Events:
+SpanEvent #0
+     -> Name: diagnosis_started
+     -> Timestamp: 2026-05-26 05:14:28.9754351 +0000 UTC
+     -> DroppedAttributesCount: 0
+     -> Attributes::
+          -> incident.id: Str(INC-404-RECURSE)
+          -> tools.planned: Str(query_logs,query_traces,query_metrics)
+Span #5
+    Trace ID       : 542a723f4ff237e571011cb4399c0c66
+    Parent ID      : ee772ba350eb1bfe
+    ID             : 4738bada509011cb
+    Name           : agent.phase.self_check
+    Kind           : Internal
+    Start time     : 2026-05-26 05:14:29.9269343 +0000 UTC
+    End time       : 2026-05-26 05:14:30.2274499 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> investigation.confidence: Double(0.63)
+     -> self_check.threshold: Double(0.8)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(420)
+     -> llm.tokens.output: Int(185)
+     -> llm.cost.usd: Double(0.0014500000000000001)
+     -> self_check.score: Double(0.5985)
+     -> self_check.retry_triggered: Bool(true)
+     -> self_check.reason: Str(confidence_below_threshold)
+     -> self_check.missing_coverage: Str(upstream_dependency_traces)
+Events:
+SpanEvent #0
+     -> Name: self_check_failed
+     -> Timestamp: 2026-05-26 05:14:30.2274175 +0000 UTC
+     -> DroppedAttributesCount: 0
+     -> Attributes::
+          -> self_check.score: Double(0.5985)
+          -> self_check.confidence: Double(0.63)
+          -> self_check.threshold: Double(0.8)
+          -> self_check.gap: Str(upstream trace coverage incomplete)
+Span #6
+    Trace ID       : 542a723f4ff237e571011cb4399c0c66
+    Parent ID      : 2d15f3df5d986cf1
+    ID             : 5aab0e34d83708bd
+    Name           : agent.tool.query_traces.retry
+    Kind           : Internal
+    Start time     : 2026-05-26 05:14:30.2276064 +0000 UTC
+    End time       : 2026-05-26 05:14:30.6283536 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> tool.name: Str(agent.tool.query_traces.retry)
+     -> tool.source: Str(dynatrace-distributed-traces)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(284)
+     -> llm.tokens.output: Int(95)
+     -> llm.cost.usd: Double(0.00083)
+     -> tool.result.count: Int(23)
+     -> tool.result.p99_latency_ms: Int(4872)
+     -> tool.result.error_rate_pct: Double(34.7)
+Span #7
+    Trace ID       : 542a723f4ff237e571011cb4399c0c66
+    Parent ID      : ee772ba350eb1bfe
+    ID             : 2d15f3df5d986cf1
+    Name           : agent.phase.reinvestigate
+    Kind           : Internal
+    Start time     : 2026-05-26 05:14:30.2275318 +0000 UTC
+    End time       : 2026-05-26 05:14:30.6284386 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> investigation.retry_reason: Str(self_check_confidence_below_threshold)
+     -> investigation.confidence_before_retry: Double(0.63)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(634)
+     -> llm.tokens.output: Int(312)
+     -> llm.cost.usd: Double(0.0023525000000000004)
+     -> investigation.confidence: Double(0.91)
+     -> investigation.confidence_delta: Double(0.28)
+     -> reinvestigation.new_evidence: Str(stripe-api-timeout-cascade)
+     -> reinvestigation.result_count: Int(23)
+Events:
+SpanEvent #0
+     -> Name: reinvestigation_triggered
+     -> Timestamp: 2026-05-26 05:14:30.227567 +0000 UTC
+     -> DroppedAttributesCount: 0
+     -> Attributes::
+          -> trigger: Str(self_check_failure)
+          -> incident.id: Str(INC-404-RECURSE)
+          -> confidence_before: Double(0.63)
+          -> strategy: Str(deep_upstream_trace_analysis)
+Span #8
+    Trace ID       : 542a723f4ff237e571011cb4399c0c66
+    Parent ID      : ee772ba350eb1bfe
+    ID             : 84be0b7c40c8e1d3
+    Name           : agent.phase.final_decision
+    Kind           : Internal
+    Start time     : 2026-05-26 05:14:30.6285372 +0000 UTC
+    End time       : 2026-05-26 05:14:30.6286476 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> incident.service: Str(payment-gateway)
+     -> incident.severity: Str(P1)
+     -> investigation.confidence: Double(0.91)
+     -> investigation.retry_triggered: Bool(true)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> llm.tokens.input: Int(892)
+     -> llm.tokens.output: Int(445)
+     -> llm.cost.usd: Double(0.00334)
+     -> decision.action: Str(escalate_to_stripe_api_team)
+     -> decision.runbook: Str(RB-PAYMENT-UPSTREAM-TIMEOUT)
+     -> decision.root_cause: Str(Stripe API timeout cascade -> DB connection pool exhaustion)
+     -> decision.estimated_ttm_minutes: Int(25)
+Events:
+SpanEvent #0
+     -> Name: final_decision_generated
+     -> Timestamp: 2026-05-26 05:14:30.6286125 +0000 UTC
+     -> DroppedAttributesCount: 0
+     -> Attributes::
+          -> incident.id: Str(INC-404-RECURSE)
+          -> decision.confidence: Double(0.91)
+          -> decision.action: Str(escalate_to_stripe_api_team)
+          -> decision.runbook: Str(RB-PAYMENT-UPSTREAM-TIMEOUT)
+          -> decision.root_cause: Str(Stripe API timeout cascade -> DB connection pool exhaustion)
+Span #9
+    Trace ID       : 542a723f4ff237e571011cb4399c0c66
+    Parent ID      : 
+    ID             : ee772ba350eb1bfe
+    Name           : agent.incident.handle
+    Kind           : Internal
+    Start time     : 2026-05-26 05:14:28.7750313 +0000 UTC
+    End time       : 2026-05-26 05:14:30.6287083 +0000 UTC
+    Status code    : Unset
+    Status message : 
+    DroppedAttributesCount: 0
+    DroppedEventsCount: 0
+    DroppedLinksCount: 0
+Attributes:
+     -> incident.id: Str(INC-404-RECURSE)
+     -> incident.service: Str(payment-gateway)
+     -> incident.severity: Str(P1)
+     -> llm.model: Str(gemini-1.5-pro)
+     -> agent.version: Str(1.0.0)
+     -> agent.pipeline: Str(recursive-self-check)
+     -> investigation.confidence: Double(0.91)
+     -> investigation.retry_triggered: Bool(true)
+     -> investigation.phases_executed: Int(5)
+     -> llm.tokens.input: Int(2614)
+     -> llm.tokens.output: Int(1252)
+     -> llm.cost.usd: Double(0.009527500000000001)
+Events:
+SpanEvent #0
+     -> Name: incident_received
+     -> Timestamp: 2026-05-26 05:14:28.775067 +0000 UTC
+     -> DroppedAttributesCount: 0
+     -> Attributes::
+          -> incident.id: Str(INC-404-RECURSE)
+          -> incident.service: Str(payment-gateway)
+          -> incident.severity: Str(P1)
+          -> source: Str(pagerduty-webhook)
+	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "otelcol.component.id": "debug", "otelcol.component.kind": "exporter", "otelcol.signal": "traces"}
+2026-05-26T11:19:06.048+0530	info	otelcol@v0.152.0/collector.go:391	Received signal from OS	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}, "signal": "terminated"}
+2026-05-26T11:19:06.048+0530	info	service@v0.152.0/service.go:278	Starting shutdown...	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}}
+2026-05-26T11:19:06.052+0530	info	extensions/extensions.go:69	Stopping extensions...	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}}
+2026-05-26T11:19:06.052+0530	info	service@v0.152.0/service.go:292	Shutdown complete.	{"resource": {"service.instance.id": "002a7d5c-f909-42df-a8ae-8d6116fc3bc2", "service.name": "otelcol-contrib", "service.version": "0.152.0"}}

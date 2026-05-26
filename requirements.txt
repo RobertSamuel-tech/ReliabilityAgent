@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+google-cloud-aiplatform
+google-adk
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-exporter-otlp-proto-http
+opentelemetry-instrumentation
+opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-httpx
+httpx
+python-dotenv
+structlog
+pydantic
+google-cloud-logging
+opentelemetry-semantic-conventions
