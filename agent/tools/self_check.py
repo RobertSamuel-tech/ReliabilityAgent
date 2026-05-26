@@ -7,9 +7,14 @@ from agent.tools._tool_registry import get_tool_count, get_tool_names
 
 tracer = trace.get_tracer(__name__)
 
-_DT_APPS_URL = "https://roj78786.apps.dynatrace.com"
-_DQL_ENDPOINT = f"{_DT_APPS_URL}/platform/storage/query/v1/query:execute"
 _MIN_TOOL_CALLS = 3
+
+
+def _dql_endpoint() -> str:
+    tenant = os.getenv("DYNATRACE_TENANT_URL", "").rstrip("/")
+    # apps.dynatrace.com hosts Grail; live.dynatrace.com hosts classic APIs
+    apps_host = tenant.replace(".live.dynatrace.com", ".apps.dynatrace.com")
+    return f"{apps_host}/platform/storage/query/v1/query:execute"
 
 
 def _query_dql(trace_id: str, dt_token: str) -> tuple[int | None, str]:
@@ -27,7 +32,7 @@ def _query_dql(trace_id: str, dt_token: str) -> tuple[int | None, str]:
     )
     try:
         resp = httpx.post(
-            _DQL_ENDPOINT,
+            _dql_endpoint(),
             headers={
                 "Authorization": f"Bearer {dt_token}",
                 "Content-Type": "application/json",
