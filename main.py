@@ -1,4 +1,7 @@
 """FastAPI entrypoint for ReliabilityAgent on Cloud Run."""
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, BackgroundTasks
 from pydantic import BaseModel
 from agent.core import ReliabilityAgent

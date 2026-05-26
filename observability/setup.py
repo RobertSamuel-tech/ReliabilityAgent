@@ -1,4 +1,5 @@
-"""OpenTelemetry TracerProvider and MeterProvider setup."""
+"""OpenTelemetry TracerProvider, MeterProvider, and LoggerProvider setup."""
+import logging
 import os
 from opentelemetry import trace, metrics
 from opentelemetry.sdk.trace import TracerProvider
@@ -9,8 +10,26 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExport
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.semconv.resource import ResourceAttributes
+from opentelemetry.sdk._logs import LoggerProvider
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+from opentelemetry._logs import set_logger_provider
+from opentelemetry.sdk._logs import LoggingHandler
+
+_setup_done = False
+otel_handler = None
+
 
 def setup_telemetry():
+    global _setup_done, otel_handler
+
+    if _setup_done:
+        return (
+            trace.get_tracer("reliability-agent", "1.0.0"),
+            metrics.get_meter("reliability-agent", "1.0.0"),
+            otel_handler,
+        )
+
     resource = Resource.create({
         ResourceAttributes.SERVICE_NAME: "reliability-agent",
         ResourceAttributes.SERVICE_VERSION: "1.0.0",
@@ -39,4 +58,19 @@ def setup_telemetry():
     meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
     metrics.set_meter_provider(meter_provider)
 
-    return trace.get_tracer("reliability-agent", "1.0.0"), metrics.get_meter("reliability-agent", "1.0.0")
+    # Logs
+    log_exporter = OTLPLogExporter(
+        endpoint=f"{otel_endpoint}/v1/logs",
+        headers={"Authorization": f"Api-Token {dt_token}"}
+    )
+    logger_provider = LoggerProvider(resource=resource)
+    logger_provider.add_log_record_processor(BatchLogRecordProcessor(log_exporter))
+    set_logger_provider(logger_provider)
+    otel_handler = LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
+
+    _setup_done = True
+    return (
+        trace.get_tracer("reliability-agent", "1.0.0"),
+        metrics.get_meter("reliability-agent", "1.0.0"),
+        otel_handler,
+    )

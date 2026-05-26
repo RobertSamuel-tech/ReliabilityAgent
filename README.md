@@ -1,15 +1,16 @@
 # ReliabilityAgent
 
-### A self-observing AI reliability platform that instruments its own reasoning — and reinvestigates when its confidence falls short.
+### A self-observing AI reliability platform that instruments its own reasoning — and reinvestigates when its investigation falls short.
 
-> **Dynatrace Sponsor Track — Google Cloud Rapid Agent Hackathon**
-> Built on Google Agent Development Kit · Vertex AI Agent Platform · Gemini 2.5 Pro · OpenTelemetry · Dynatrace OTLP
+> **Dynatrace Sponsor Track — Google Cloud Rapid Agent Hackathon**  
+> Built on Google Agent Development Kit · OpenRouter · OpenTelemetry · Dynatrace OTLP
 
 ![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat-square&logo=python)
+![Google ADK](https://img.shields.io/badge/Google%20ADK-2.1.0-4285F4?style=flat-square&logo=googlecloud)
 ![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-OTLP-blueviolet?style=flat-square)
 ![Dynatrace](https://img.shields.io/badge/Dynatrace-Observability-00a6c8?style=flat-square)
-![Gemini](https://img.shields.io/badge/Gemini-2.5%20Pro-orange?style=flat-square&logo=google)
-![Vertex AI](https://img.shields.io/badge/Vertex%20AI-Agent%20Platform-4285F4?style=flat-square&logo=googlecloud)
+![FastAPI](https://img.shields.io/badge/FastAPI-async-009688?style=flat-square&logo=fastapi)
+![OpenRouter](https://img.shields.io/badge/OpenRouter-gpt--4o--mini-orange?style=flat-square)
 
 ---
 
@@ -17,7 +18,7 @@
 
 Modern AI agents resolve incidents faster than human engineers — but they are operationally blind.
 
-Traditional observability ends at the infrastructure layer: CPU spikes, latency percentiles, error rates. It does not reach inside the reasoning process of the agent performing the investigation. You can see *that* an agent ran. You cannot see *what* it concluded, *why* it concluded it, *which tools it called*, or *whether it was thorough enough* to make that conclusion safely.
+Traditional observability ends at the infrastructure layer: CPU spikes, latency percentiles, error rates. It does not reach inside the reasoning process of the agent performing the investigation. You can see *that* an agent ran. You cannot see *what it concluded*, *why it concluded it*, *which tools it called*, or *whether it was thorough enough* to make that conclusion safely.
 
 This creates a class of failure that infrastructure monitoring cannot surface:
 
@@ -34,9 +35,11 @@ In an autonomous reliability system, the absence of self-observability is not a 
 
 ## Solution
 
-ReliabilityAgent closes this gap. It is a production-grade AI SRE agent that does not just investigate incidents — it **observes its own investigation** and enforces correctness through a recursive self-check loop.
+ReliabilityAgent closes this gap. It is a production-grade AI SRE agent that does not just investigate incidents — it **observes its own investigation** using Dynatrace Grail DQL and enforces correctness through a recursive self-check loop.
 
-Every reasoning phase, every tool call, every confidence score is exported as a structured OpenTelemetry span into Dynatrace. After remediation, the agent queries Dynatrace for its *own* distributed trace, scores the investigation against a defined sufficiency rubric, and — if the score falls below threshold — forces re-investigation before closing.
+After remediation, the agent queries Dynatrace Grail using DQL to count how many `agent.tool` spans exist for its own trace_id, evaluates whether the investigation reached minimum depth, and — if tool coverage is insufficient — forces re-investigation before closing.
+
+Every reasoning phase, every tool call, every verdict is exported as a structured OpenTelemetry span into Dynatrace in real time.
 
 The result: an AI agent that is both operationally autonomous and operationally accountable.
 
@@ -49,7 +52,7 @@ The result: an AI agent that is both operationally autonomous and operationally 
 │                        Incident Surface                         │
 │   Alert Webhook  ──►  POST /handle-incident  (FastAPI)          │
 └──────────────────────────────┬──────────────────────────────────┘
-                               │
+                               │  BackgroundTasks (async)
                                ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                     Google ADK Agent Layer                      │
@@ -57,192 +60,144 @@ The result: an AI agent that is both operationally autonomous and operationally 
 │   ReliabilityAgent (Runner + InMemorySessionService)            │
 │         │                                                       │
 │         ▼                                                       │
-│   Gemini 2.5 Pro  ◄──  TRIAGE_PROMPT + INCIDENT_PROMPT          │
+│   gpt-4o-mini via OpenRouter  ◄──  TRIAGE_PROMPT + INCIDENT     │
+│   (LiteLlm adapter in ADK)                                      │
 │         │                                                       │
 │         ▼                                                       │
 │   ┌─────────────────────────────────────────────────┐           │
-│   │               Tool Layer (ADK FunctionTools)    │           │
+│   │            Tool Layer (ADK FunctionTools)       │           │
 │   │                                                 │           │
-│   │  query_dynatrace_traces  ─── Dynatrace API v2   │           │
-│   │  query_gcp_logs          ─── GCP Logging v2     │           │
-│   │  execute_runbook         ─── Remediation engine │           │
-│   │  verify_investigation    ─── Self-check loop    │           │
-│   │    _thoroughness           (queries own trace)  │           │
+│   │  query_dynatrace_traces  ── Dynatrace API v2    │           │
+│   │  query_gcp_logs          ── GCP Cloud Logging   │           │
+│   │  execute_runbook         ── Remediation engine  │           │
+│   │  verify_investigation    ── Grail DQL self-check │          │
+│   │    _thoroughness           + in-process registry│           │
 │   └─────────────────────────────────────────────────┘           │
+│         │                                                       │
+│   _tool_registry.py (in-process tool call counter)              │
+│         └── keyed by OTel trace_id                              │
 └──────────────────────────────┬──────────────────────────────────┘
-                               │ OTLP HTTP
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    OpenTelemetry Collector                      │
-│                                                                 │
-│   receivers:   otlp (gRPC :4317, HTTP :4318)                    │
-│   processors:  resourcedetection/gcp → transform/cost → batch   │
-│   exporters:   otlphttp/dynatrace  +  debug  +  file            │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │ OTLP → Dynatrace Ingest API
+                               │ OTLP HTTP (protobuf) — direct
                                ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                         Dynatrace                               │
 │                                                                 │
+│   POST /api/v2/otlp/v1/traces  ← BatchSpanProcessor (5s)       │
+│                                                                 │
 │   Distributed Trace Waterfall  ·  Span Analysis                 │
-│   Self-Check Span Visibility   ·  LLM Cost Attribution          │
+│   Self-Check Span Attributes   ·  LLM Cost Attribution          │
 │   Recursive Retry Visibility   ·  Root-Cause Traceability       │
-└─────────────────────────────────────────────────────────────────┘
+└──────────────────────────────┬──────────────────────────────────┘
                                │
-                    ┌──────────┘ (Self-Observability Loop)
-                    │
-                    ▼
-        verify_investigation_thoroughness
-            queries Dynatrace API v2
-            for agent's OWN trace_id
-            scores 6 rubric checks
-            score < 0.7 → reinvestigate
-            score ≥ 0.7 → close incident
+              ┌────────────────┘ Self-Observability Loop
+              │
+              ▼
+  verify_investigation_thoroughness
+      1. Attempts Grail DQL:
+         POST /platform/storage/query/v1/query:execute
+         fetch spans | filter dt.trace_id == "{trace_id}"
+         | filter startsWith(span.name, "agent.tool")
+         | summarize tool_count = count()
+      2. Falls back to in-process registry if DQL unavailable
+      3. tool_count < 3  → FAILED + retry_triggered = true
+         tool_count >= 3 → PASSED
 ```
 
 ---
 
 ## Core Capabilities
 
-**Recursive self-observability**
-The agent's final investigation step is to fetch its own distributed trace from Dynatrace and score it. If the score falls below the sufficiency threshold, the agent is forced back into investigation mode. This loop is itself a traceable span.
+**Grail DQL self-observation**  
+The agent's final step is to query Dynatrace Grail using DQL to count `agent.tool` spans for its own trace. The DQL query is the canonical source of truth. When Grail DQL is unavailable (OAuth not yet configured), the agent falls back to an in-process tool call registry — same business logic, degraded data source. No accidental recursion from backend errors.
 
-**Structured operational telemetry**
-Every phase of reasoning (`triage`, `diagnose`, `self_check`, `reinvestigate`, `final_decision`) and every tool call is instrumented as a named OTel span with typed attributes. No black-box LLM calls.
+**In-process tool registry**  
+`agent/tools/_tool_registry.py` maintains a module-level dict keyed by OTel trace_id. Each tool records its call at span creation time. The registry provides a reliable local fallback for the self-check decision when Grail DQL is unreachable.
 
-**Confidence-gated remediation**
-Span attribute `diagnosis.confidence` (0.0–1.0) is set during diagnosis. The self-check enforces that confidence reaches threshold before incident closure is permitted.
+**Structured operational telemetry**  
+Every phase and tool call is instrumented as a named OTel span with typed attributes. No black-box LLM calls. Spans are exported directly from the Python OTel SDK to Dynatrace via OTLP HTTP protobuf — no collector middleware required.
 
-**Token-cost attribution**
-Custom metrics `agent.tokens.total` and `agent.incident.cost_usd` are exported per incident, enabling cost-per-resolution analysis at the infrastructure layer.
+**Confidence-gated remediation**  
+The self-check enforces `tool_count >= 3` before incident closure. Tool coverage across Dynatrace traces, GCP logs, and runbook execution is a hard requirement — not a soft recommendation.
 
-**Tool-call coverage enforcement**
-The self-check rubric requires a minimum of three distinct tool calls covering Dynatrace traces, GCP logs, and metrics. Partial investigations fail automatically.
+**Token-cost attribution**  
+`llm.tokens.input`, `llm.tokens.output`, `llm.cost.usd`, and `llm.model` are set as span attributes on the root `agent.incident.handle` span. Cost per resolution is queryable directly in Dynatrace without application-layer aggregation.
 
-**Production-grade OTLP pipeline**
-BatchSpanProcessor with retry queue, sending queue depth control, and fallback to local file export. Collector-side cost transformation via OTel processor DSL.
+**Provider-agnostic LLM layer**  
+ADK's `LiteLlm` adapter connects the agent to any OpenAI-compatible endpoint. Currently using `gpt-4o-mini` via OpenRouter. Switching models requires a single env-var change — no code changes.
 
 ---
 
 ## Dynatrace Integration
 
-Dynatrace is not a passive sink for this agent's telemetry — it is the enforcement substrate of the self-observability loop.
+Dynatrace is the enforcement substrate of the self-observability loop — not a passive sink.
 
-**Ingest path**
-Spans and metrics are exported via OTLP HTTP to the Dynatrace ingest API (`/api/v2/otlp`). The OTel Collector handles batching, retry, and queue management before forwarding.
+**Ingest path**  
+The Python OTel SDK's `OTLPSpanExporter` sends protobuf traces directly to `https://{tenant}.live.dynatrace.com/api/v2/otlp/v1/traces`. `BatchSpanProcessor` exports every 5 seconds with automatic retry.
 
-**Trace waterfall**
-The full agent reasoning graph appears as a distributed trace waterfall in Dynatrace Distributed Traces. Each phase and tool call is a discrete span with typed attributes — duration, status, input parameters, result counts, confidence scores.
+**Grail DQL self-observation**  
+The self-check tool queries `POST https://{tenant}.apps.dynatrace.com/platform/storage/query/v1/query:execute`:
+```dql
+fetch spans
+| filter dt.trace_id == "{trace_id}"
+| filter startsWith(span.name, "agent.tool")
+| summarize tool_count = count()
+```
+Result drives the pass/fail/retry decision. Requires OAuth 2.0 Bearer JWT (separate from the OTLP API token).
 
-**Self-check loop visibility**
-`agent.phase.self_check` spans expose the 6-check rubric result (`self_check.score`, `self_check.verdict`, `self_check.tool_calls`, `self_check.phases`) directly in the trace. When reinvestigation triggers, the resulting spans attach as children within the same trace, making the recursive retry sequence fully visible in the waterfall.
+**Trace waterfall**  
+The full agent reasoning graph appears as a distributed trace waterfall in Dynatrace. Each phase and tool call is a discrete span — duration, status, input parameters, result counts.
 
-**Root-cause traceability**
-Span attribute `incident.id` is propagated through the entire trace, enabling trace search by incident identifier. Every tool call that contributed to the final diagnosis is inspectable without log correlation.
+**Self-check span attributes**
 
-**Operational debugging**
-When an agent call fails — auth error, API timeout, malformed response — `span.record_exception()` and `span.set_status(StatusCode.ERROR)` surface the failure in Dynatrace's error analysis view, with the span's tool inputs intact for debugging.
+| Attribute | Values |
+|---|---|
+| `self_check.dql_attempted` | `true` always |
+| `self_check.dql_backend_result` | `"dynatrace_grail_dql"` or `"dql_unavailable_http_401"` |
+| `self_check.query_backend` | `"dynatrace_grail_dql"` or `"in_process_registry"` |
+| `self_check.tool_count` | integer |
+| `self_check.verdict` | `"PASSED"`, `"FAILED"`, `"UNAVAILABLE"` |
+| `self_check.retry_triggered` | `true` / `false` |
+| `self_check.reason` | `"insufficient_tool_depth"` when FAILED |
 
-**Cost attribution**
-The collector's `transform/cost` processor computes `llm.cost.usd` from token counts inline: `(input_tokens × $0.00000125) + (output_tokens × $0.000005)`. Cost per incident is queryable as a Dynatrace metric without any application-layer aggregation.
+**Root-cause traceability**  
+`incident.id` is propagated through the entire trace. Every contributing tool call is inspectable in the waterfall without log correlation.
 
-> Without Dynatrace, the agent is blind to its own behavior. Tool call coverage, confidence trajectories, retry chains, and cost profiles exist only as instrumented spans. Dynatrace makes them observable, searchable, and alertable.
+**Operational debugging**  
+`span.record_exception()` and `span.set_status(StatusCode.ERROR)` surface failures in Dynatrace error analysis with tool inputs intact.
+
+> Filter in Dynatrace Distributed Traces: `service.name = "reliability-agent"` or `incident.id = INC-DEMO-006`
 
 ---
 
-## OpenTelemetry Pipeline
+## Self-Check Decision Logic
 
-```yaml
-# config/otel-collector-config.yaml
+```python
+# 1. Attempt Grail DQL (OAuth Bearer required)
+dql_count, dql_backend = _query_dql(trace_id, dt_token)
 
-receivers:
-  otlp:
-    protocols:
-      http: { endpoint: localhost:4318 }
-      grpc: { endpoint: localhost:4317 }
+if dql_count is not None:
+    tool_count = dql_count
+    query_backend = "dynatrace_grail_dql"
+else:
+    # 2. Fallback: in-process registry (same process, reliable)
+    tool_count = get_tool_count(trace_id)   # from _tool_registry.py
+    query_backend = "in_process_registry"
 
-processors:
-  resourcedetection/gcp:           # auto-attach GCP resource attributes
-    detectors: [gcp, env]
-  transform/cost:                  # compute LLM cost from token attributes
-    trace_statements:
-      - set(attributes["llm.cost.usd"],
-            (attributes["llm.tokens.input"] * 0.00000125) +
-            (attributes["llm.tokens.output"] * 0.000005))
-        where attributes["llm.tokens.input"] != nil
-  batch:
-    send_batch_size: 1024
-    timeout: 5s
+# 3. Business decision — only from data, never from backend errors
+if tool_count == 0 and query_backend == "in_process_registry":
+    return "SELF-CHECK UNAVAILABLE"   # no recursion
 
-exporters:
-  otlphttp/dynatrace:
-    endpoint: https://<tenant>.live.dynatrace.com/api/v2/otlp
-    headers: { Authorization: "Api-Token ${DYNATRACE_API_TOKEN}" }
-    sending_queue: { enabled: true, num_consumers: 4, queue_size: 100 }
-    retry_on_failure: { enabled: true, max_elapsed_time: 300s }
-  debug: { verbosity: detailed }
-  file: { path: ./output/traces.json }
+if tool_count < 3:
+    span.set_attribute("self_check.verdict", "FAILED")
+    span.set_attribute("self_check.retry_triggered", True)
+    span.set_attribute("self_check.reason", "insufficient_tool_depth")
+    span.add_event("self_check_failed", {...})
+    return "SELF-CHECK FAILED — must re-investigate"
+
+span.set_attribute("self_check.verdict", "PASSED")
+span.add_event("self_check_passed", {...})
+return "SELF-CHECK PASSED — investigation sufficient"
 ```
-
-The pipeline follows OTel semantic conventions throughout: `service.name`, `service.version`, `deployment.environment`, `gcp.project.id`. Span names use dot-notation namespacing (`agent.tool.gcp.query_logs`) to enable hierarchical filtering in Dynatrace.
-
----
-
-## Incident Workflow: INC-404 Payment Gateway Outage
-
-```
-T+00s  Webhook received: "CPU spike on payment-gateway. 95% connections active. Latency >2s."
-       → span: agent.incident.handle
-         attributes: incident.id=INC-404, incident.severity=P1
-
-T+01s  Triage phase initiated
-       → span: agent.phase.triage
-         Gemini classifies: service_degradation, P1, payment-gateway
-
-T+03s  Diagnosis phase: query Dynatrace traces
-       → span: agent.tool.dynatrace.query_traces
-         filter: service=payment-gateway, time=now-1h
-         result: 847 error traces, p99 latency=4.2s, connection_pool_exhausted
-
-T+06s  Diagnosis phase: query GCP logs
-       → span: agent.tool.gcp.query_logs
-         filter: severity>=ERROR, resource=payment-gateway
-         result: "Connection pool exhausted on db-master", 95/100 connections active
-
-T+09s  Diagnosis phase: query metrics
-       → span: agent.tool.dynatrace.query_traces (metrics variant)
-         result: db connection saturation confirmed, auto-scaling not triggered
-
-T+11s  Gemini sets diagnosis.confidence=0.91
-       Root cause: database connection pool exhausted due to query timeout cascade
-
-T+12s  Remediation executed
-       → span: agent.tool.execute_runbook
-         action: flush_connection_pool + scale_db_connections
-         runbook: DB-CONNPOOL-001
-
-T+14s  Self-check initiated — agent queries its own trace
-       → span: agent.phase.self_check
-         self_check.trace_id: <propagated_trace_id>
-         Calls Dynatrace API v2: GET /api/v2/traces/{trace_id}
-
-T+16s  Rubric evaluation:
-         ✓ min_3_tools: 4 tool calls found
-         ✓ queried_traces: dynatrace.query_traces present
-         ✓ queried_logs: gcp.query_logs present
-         ✓ queried_metrics: metrics query present
-         ✓ all_phases: 5 phases present
-         ✓ high_confidence: diagnosis.confidence=0.91 ≥ 0.80
-         score: 6/6 = 1.0
-
-T+17s  self_check.verdict: SUFFICIENT
-       → span: agent.phase.final_decision
-         Incident INC-404 closed. Trace exported to Dynatrace.
-
-Total duration: ~17s end-to-end, fully traceable.
-```
-
-*When self-check fails (score < 0.7): `agent.phase.reinvestigate` spawns as a child span of the same root trace, with retry tool calls attached beneath it. The entire recursive sequence is visible as a single waterfall in Dynatrace.*
 
 ---
 
@@ -250,112 +205,179 @@ Total duration: ~17s end-to-end, fully traceable.
 
 ```
 agent.incident.handle  [root]
-│   incident.id = INC-404
+│   incident.id = INC-DEMO-006
 │   incident.severity = P1
 │   trace.id = <32-char hex>
+│   llm.model = openrouter/openai/gpt-4o-mini
+│   llm.tokens.input = <n>
+│   llm.tokens.output = <n>
+│   llm.cost.usd = <float>
 │
-├── agent.phase.triage
-│       classification = service_degradation
-│       severity = P1
+├── agent.tool.dynatrace.query_traces        [registered in _tool_registry]
+│       tool.name = dynatrace.query_traces
+│       tool.input.query = "..."
+│       tool.result.count = 12
 │
-├── agent.phase.diagnose
-│   │   diagnosis.confidence = 0.91
-│   │
-│   ├── agent.tool.dynatrace.query_traces
-│   │       tool.input.query = "payment-gateway errors"
-│   │       tool.result.count = 847
-│   │       tool.status_code = 200
-│   │
-│   ├── agent.tool.gcp.query_logs
-│   │       tool.input.filter = "severity>=ERROR"
-│   │       tool.result.count = 5
-│   │       tool.mock_data = false
-│   │
-│   └── agent.tool.execute_runbook
-│           runbook.id = DB-CONNPOOL-001
-│           runbook.action = flush_connection_pool
+├── agent.tool.gcp.query_logs               [registered in _tool_registry]
+│       tool.name = gcp.query_logs
+│       tool.input.filter = "..."
+│       tool.result.count = 5
+│
+├── agent.tool.runbook.execute              [registered in _tool_registry]
+│       runbook.name = "..."
+│       runbook.target = "..."
+│       runbook.status = success
 │
 ├── agent.phase.self_check
-│       self_check.score = 1.0
-│       self_check.verdict = SUFFICIENT
-│       self_check.tool_calls = 4
-│       self_check.phases = 5
+│       self_check.dql_attempted = true
+│       self_check.dql_backend_result = dql_unavailable_http_401
+│       self_check.query_backend = in_process_registry
+│       self_check.tool_count = 3
+│       self_check.verdict = PASSED
+│       self_check.retry_triggered = false
+│       [event: self_check_passed]
 │
-│   [if score < 0.7, reinvestigate spawns here]
-│   ├── agent.phase.reinvestigate
-│   │   └── agent.tool.dynatrace.query_traces  [retry]
-│   └── agent.phase.self_check  [retry]
+│   [if tool_count < 3, reinvestigation spawns here]
+│   ├── agent.tool.dynatrace.query_traces  [retry]
+│   ├── agent.tool.gcp.query_logs          [retry]
+│   └── agent.phase.self_check             [retry]
+│           self_check.verdict = PASSED
+│           self_check.retry_triggered = false
 │
-└── agent.phase.final_decision
-        incident.resolution = confirmed
-        incident.closed = true
+└── [incident closed]
 ```
 
 ---
 
-## Demo
+## Incident Workflow: INC-DEMO-006
+
+```
+T+00s  POST /handle-incident received
+       → span: agent.incident.handle
+         incident.id = INC-DEMO-006, severity = P1
+         trace_id propagated to agent prompt
+
+T+02s  LLM (gpt-4o-mini via OpenRouter) begins reasoning
+       Model selects: query_dynatrace_traces
+
+T+15s  Tool: query_dynatrace_traces
+       → span: agent.tool.dynatrace.query_traces
+         Mock: "12 error traces, high latency detected"
+         Registry: trace_id → ["dynatrace.query_traces"]
+
+T+15s  Tool: query_gcp_logs
+       → span: agent.tool.gcp.query_logs
+         Mock: "Connection pool exhausted on db-master"
+         Registry: trace_id → ["dynatrace.query_traces", "gcp.query_logs"]
+
+T+xx s  Tool: execute_runbook
+        → span: agent.tool.runbook.execute
+          runbook executed, remediation confirmed
+          Registry: trace_id → [..., "runbook.execute"]  (count = 3)
+
+T+xx s  Tool: verify_investigation_thoroughness(trace_id, incident_id)
+        → span: agent.phase.self_check
+          1. DQL attempted → HTTP 401 (OAuth required)
+          2. Fallback: registry count = 3
+          3. 3 >= 3 → PASSED
+          self_check.verdict = PASSED
+          self_check.retry_triggered = false
+
+T+92s  Investigation complete
+       → spans flushed to Dynatrace via BatchSpanProcessor
+```
+
+---
+
+## Project Structure
+
+```
+ReliabilityAgent/
+├── agent/
+│   ├── core.py                    # ReliabilityAgent class, ADK runner, OTel root span
+│   ├── prompts.py                 # TRIAGE_PROMPT, INCIDENT_PROMPT_TEMPLATE
+│   └── tools/
+│       ├── _tool_registry.py      # In-process tool call counter (trace_id → [tool_names])
+│       ├── dt_query.py            # Dynatrace API v2 trace query tool
+│       ├── gcp_logs.py            # GCP Cloud Logging query tool
+│       ├── runbook.py             # Remediation runbook execution tool
+│       └── self_check.py          # Grail DQL self-observation + registry fallback
+├── observability/
+│   ├── setup.py                   # TracerProvider, MeterProvider, OTLP exporters
+│   └── logger.py                  # Structured logger with OTel correlation
+├── config/
+│   ├── otel-collector-config.yaml # Optional OTel Collector config (not required)
+│   └── dynatrace_dashboards.json  # Importable Dynatrace dashboard
+├── main.py                        # FastAPI app, /handle-incident endpoint
+├── tests/
+│   ├── demo_run.py                # Standalone demo (limited — use FastAPI path)
+│   └── test_adk_runner.py
+├── requirements.txt
+└── .env.example
+```
+
+---
+
+## Quick Start
 
 ### Prerequisites
 
 ```bash
+git clone https://github.com/RobertSamuel-tech/ReliabilityAgent.git
+cd ReliabilityAgent
+python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env
-# Edit .env: set DYNATRACE_TENANT_URL, DYNATRACE_API_TOKEN, GOOGLE_CLOUD_PROJECT
 ```
 
-### Step 1: Start the OTel Collector
+Edit `.env`:
+
+```env
+# OpenRouter (OpenAI-compatible — required)
+OPENROUTER_API_KEY=sk-or-v1-...
+OPENROUTER_MODEL=openrouter/openai/gpt-4o-mini
+
+# Dynatrace
+DYNATRACE_TENANT_URL=https://<tenant>.live.dynatrace.com
+DYNATRACE_API_TOKEN=dt0c01...
+OTEL_EXPORTER_OTLP_ENDPOINT=https://<tenant>.live.dynatrace.com/api/v2/otlp
+
+# GCP (optional — falls back to mock data if not set)
+GOOGLE_CLOUD_PROJECT=your-project-id
+GOOGLE_CLOUD_LOCATION=us-central1
+```
+
+### Run
 
 ```bash
-# Download otelcol-contrib from:
-# https://github.com/open-telemetry/opentelemetry-collector-releases/releases
-
-DYNATRACE_API_TOKEN=<your_token> \
-  otelcol-contrib --config=config/otel-collector-config.yaml
+uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-Or with Docker:
-
-```bash
-docker run --rm -p 4317:4317 -p 4318:4318 \
-  -v "$(pwd)/config:/etc/otel" \
-  -e DYNATRACE_API_TOKEN=$DYNATRACE_API_TOKEN \
-  otel/opentelemetry-collector-contrib:latest \
-  --config /etc/otel/otel-collector-config.yaml
-```
-
-### Step 2: Start the API
-
-```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### Step 3: Trigger a Demo Incident
+### Trigger an incident
 
 ```bash
 curl -X POST http://localhost:8000/handle-incident \
   -H "Content-Type: application/json" \
-  -d '{"incident_id": "INC-404", "alert_text": "CPU spike on payment-gateway. 95% connections active. Latency >2s."}'
+  -d '{
+    "incident_id": "INC-DEMO-006",
+    "alert_text": "Database connection pool exhausted on api-v2. P1 incident."
+  }'
 ```
 
-Or run the standalone demo script:
+The agent runs asynchronously (~90 seconds). Watch the server log for tool call confirmations and "Incident investigation complete".
 
-```bash
-python tests/demo_run.py
+### Observe in Dynatrace
+
+Navigate to **Distributed Traces** and filter:
+```
+service.name = "reliability-agent"
 ```
 
-### Step 4: Observe in Dynatrace
-
-Live distributed traces:
-```
-https://roj78786.apps.dynatrace.com/ui/diagnostictools/purepaths
-```
-
-Filter by: `service.name = reliability-agent` or `incident.id = INC-404`
+Look for `agent.phase.self_check` to see the DQL verdict, tool count, and retry decision.
 
 Import the command center dashboard:
-```bash
-# Dynatrace Settings → Dashboards → Import
-config/dynatrace_dashboards.json
+```
+Dynatrace → Dashboards → Import → config/dynatrace_dashboards.json
 ```
 
 ---
@@ -364,49 +386,14 @@ config/dynatrace_dashboards.json
 
 | Layer | Technology |
 |---|---|
-| Agent Framework | Google Agent Development Kit (ADK) |
-| Agent Platform | Vertex AI Agent Platform |
-| LLM | Gemini 2.5 Pro (`gemini-2.5-pro`) |
+| Agent Framework | Google Agent Development Kit (ADK) 2.1.0 |
+| LLM | gpt-4o-mini via OpenRouter (LiteLlm adapter) |
 | API Layer | FastAPI + Uvicorn |
 | Observability SDK | OpenTelemetry Python SDK |
-| Telemetry Transport | OTLP HTTP (traces + metrics) |
-| Collector | OpenTelemetry Collector Contrib |
-| Observability Backend | Dynatrace |
-| HTTP Client | httpx (async-capable, timeout-safe) |
-| GCP Logging | google-cloud-logging v2 |
-| Infrastructure | Cloud Run + Terraform |
-
----
-
-## Deployment
-
-```bash
-cd infra && terraform apply
-```
-
-The Terraform configuration provisions Cloud Run, IAM bindings, and environment variable injection for GCP and Dynatrace credentials.
-
----
-
-## Roadmap
-
-**Autonomous remediation intelligence**
-Replace static runbooks with a reinforcement-learned remediation policy that weights actions by historical success rates, surfaced as span attributes.
-
-**MCP tool integration**
-Extend the tool layer via Model Context Protocol to support heterogeneous observability backends — Prometheus, Grafana, PagerDuty — without agent-layer coupling.
-
-**Kubernetes incident response**
-Native `kubectl` tooling for pod restarts, deployment rollbacks, and HPA scaling events, with admission webhook integration for pre-execution approval gates.
-
-**Multi-agent coordination**
-Decompose complex incidents across specialized sub-agents (network, database, application) coordinated through a root orchestrator, with cross-agent trace propagation preserving a unified trace context.
-
-**Predictive incident triggering**
-Replace reactive webhook triggering with anomaly-score-based preemptive investigation, using Dynatrace Davis AI scores as agent invocation signals.
-
-**Telemetry-driven self-improvement**
-Aggregate self-check scores, tool call patterns, and resolution outcomes across incidents to identify systematic investigation gaps and update the agent's instruction prompt dynamically.
+| Telemetry Transport | OTLP HTTP protobuf (direct to Dynatrace) |
+| Observability Backend | Dynatrace (OTLP ingest + Grail DQL) |
+| HTTP Client | httpx |
+| GCP Logging | google-cloud-logging v2 (mock fallback if auth unavailable) |
 
 ---
 
@@ -414,18 +401,16 @@ Aggregate self-check scores, tool call patterns, and resolution outcomes across 
 
 The deployment of autonomous AI agents into production infrastructure is accelerating. The operational frameworks for governing them are not keeping pace.
 
-Infrastructure observability answers: *Is the system healthy?*
+Infrastructure observability answers: *Is the system healthy?*  
 Application observability answers: *Is the service behaving correctly?*
 
-Neither answers: *Is the AI agent that manages both of those things reasoning correctly?*
+Neither answers: *Is the AI agent managing both of those things reasoning correctly?*
 
-ReliabilityAgent is an argument — in working code — that this question is answerable. That AI agent behavior can be instrumented, exported, and analyzed with the same precision applied to distributed systems. That confidence scoring, tool coverage, phase sequencing, and recursive self-correction are not aspirational AI safety properties — they are operational engineering properties, achievable today with OpenTelemetry and a Dynatrace backend.
+ReliabilityAgent is an argument — in working code — that this question is answerable. That AI agent behavior can be instrumented, exported, and analyzed with the same precision applied to distributed systems. That tool coverage, phase sequencing, and recursive self-correction are not aspirational AI safety properties — they are operational engineering properties, achievable today with OpenTelemetry and a Dynatrace backend.
 
 The future of AI systems is not just autonomous execution. It is **observable autonomy**.
 
-ReliabilityAgent transforms observability from passive monitoring into active AI self-governance.
-
 ---
 
-*Built for the Google Cloud Rapid Agent Hackathon — Dynatrace Sponsor Track.*
-*Google ADK · Vertex AI · Gemini 2.5 Pro · OpenTelemetry · Dynatrace*
+*Built for the Google Cloud Rapid Agent Hackathon — Dynatrace Sponsor Track.*  
+*Google ADK · OpenRouter · gpt-4o-mini · OpenTelemetry · Dynatrace*

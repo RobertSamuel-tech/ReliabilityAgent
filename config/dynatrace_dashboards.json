@@ -1,1 +1,62 @@
-{"dashboards": []}
+{
+  "metadata": {
+    "configurationVersions": [7],
+    "clusterVersion": "1.0.0"
+  },
+  "dashboardMetadata": {
+    "name": "ReliabilityAgent ROI Command Center",
+    "shared": true,
+    "owner": "hackathon-team",
+    "tags": ["ai-agent", "observability", "reliability"]
+  },
+  "tiles": [
+    {
+      "name": "Incidents Handled",
+      "tileType": "DATA_EXPLORER",
+      "configured": true,
+      "bounds": {"top": 0, "left": 0, "width": 304, "height": 304},
+      "queries": [
+        {
+          "id": "A",
+          "metric": "builtin:service.requestCount",
+          "spaceAggregation": "SUM",
+          "filter": "service.name:reliability-agent"
+        }
+      ]
+    },
+    {
+      "name": "Token Cost Trend",
+      "tileType": "DATA_EXPLORER",
+      "configured": true,
+      "bounds": {"top": 0, "left": 304, "width": 304, "height": 304},
+      "queries": [
+        {
+          "id": "B",
+          "metric": "custom:agent.tokens.total",
+          "spaceAggregation": "SUM",
+          "splitBy": ["model"]
+        }
+      ]
+    },
+    {
+      "name": "Self-Check Outcomes",
+      "tileType": "DATA_EXPLORER",
+      "configured": true,
+      "bounds": {"top": 0, "left": 608, "width": 304, "height": 304},
+      "queries": [
+        {
+          "id": "C",
+          "metric": "custom:agent.self_check.verdict",
+          "spaceAggregation": "AVG"
+        }
+      ]
+    },
+    {
+      "name": "Agent Architecture",
+      "tileType": "MARKDOWN",
+      "configured": true,
+      "bounds": {"top": 304, "left": 0, "width": 912, "height": 200},
+      "markdown": "## ReliabilityAgent: Self-Observing AI\n\n- **Agent**: Vertex AI + ADK + Gemini 2.5 Pro\n- **Observability**: OpenTelemetry → Collector → Dynatrace\n- **Pipeline**: Cost transformation, GCP enrichment, batching\n- **Loop**: Agent queries its own trace to verify investigation thoroughness\n\n**Architecture**: Agent → OTel SDK → Collector → Dynatrace → Agent queries back"
+    }
+  ]
+}
