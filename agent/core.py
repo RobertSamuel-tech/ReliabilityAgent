@@ -116,33 +116,71 @@ class ReliabilityAgent:
                 extra={"incident.id": incident_id, "trace.id": trace_id},
             )
 
-            session = await self.runner.session_service.create_session(
-                app_name="reliability-agent",
-                user_id="system"
-            )
-
-            content = INCIDENT_PROMPT_TEMPLATE.format(
-                incident_id=incident_id,
-                alert_text=alert_text,
-                trace_id=trace_id
-            )
-
+            model = self._model_name
+            max_retries = 1       # reinvestigate exactly once for demo clarity
+            attempts = 0
+            self_check_passed = False
             result = None
             best_tokens: dict | None = None
-            async for event in self.runner.run_async(
-                session_id=session.id,
-                user_id="system",
-                new_message=types.Content(role="user", parts=[types.Part(text=content)])
-            ):
-                result = event
-                # Accumulate across all events — prefer the reading with the most tokens
-                ev_tok = self._extract_token_usage(event)
-                if ev_tok is not None:
-                    if best_tokens is None or ev_tok["input"] > best_tokens["input"]:
-                        best_tokens = ev_tok
 
+            while attempts <= max_retries and not self_check_passed:
+                attempts += 1
+
+                # Dashboard DQL looks for "agent.phase.reinvestigate" on second pass
+                phase_span_name = "agent.phase.investigate" if attempts == 1 else "agent.phase.reinvestigate"
+
+                with tracer.start_as_current_span(phase_span_name) as phase_span:
+                    phase_span.set_attribute("attempt.number", attempts)
+                    phase_span.set_attribute("incident.id", incident_id)
+
+                    session = await self.runner.session_service.create_session(
+                        app_name="reliability-agent",
+                        user_id="system"
+                    )
+
+                    if attempts > 1:
+                        alert_msg = (
+                            f"PREVIOUS INVESTIGATION FAILED SELF-CHECK. "
+                            f"You MUST re-investigate using different tools. "
+                            f"Original alert: {alert_text}"
+                        )
+                    else:
+                        alert_msg = alert_text
+
+                    content = INCIDENT_PROMPT_TEMPLATE.format(
+                        incident_id=incident_id,
+                        alert_text=alert_msg,
+                        trace_id=trace_id
+                    )
+
+                    async for event in self.runner.run_async(
+                        session_id=session.id,
+                        user_id="system",
+                        new_message=types.Content(
+                            role="user", parts=[types.Part(text=content)]
+                        ),
+                    ):
+                        result = event
+                        ev_tok = self._extract_token_usage(event)
+                        if ev_tok is not None:
+                            if best_tokens is None or ev_tok["input"] > best_tokens["input"]:
+                                best_tokens = ev_tok
+
+                    result_text = str(result).lower()
+                    if "self-check passed" in result_text or "sufficient" in result_text:
+                        self_check_passed = True
+                        phase_span.set_attribute("self_check.outcome", "passed")
+                        phase_span.add_event("self_check_passed", {"attempt": attempts})
+                    else:
+                        phase_span.set_attribute("self_check.outcome", "failed")
+                        phase_span.add_event("self_check_failed", {"attempt": attempts})
+                        logger.info(
+                            "Self-check failed, triggering reinvestigation",
+                            extra={"attempt": attempts, "incident.id": incident_id},
+                        )
+
+            # Attach final cost telemetry to root span
             tokens = best_tokens if best_tokens is not None else self._estimate_token_usage(result)
-            model = self._model_name
             cost_usd = self._compute_cost(tokens, model)
 
             root_span.set_attribute("llm.tokens.input", int(tokens["input"]))
@@ -150,14 +188,22 @@ class ReliabilityAgent:
             root_span.set_attribute("llm.model", model)
             root_span.set_attribute("llm.cost.usd", float(cost_usd))
             root_span.set_attribute("agent.result", str(result)[:500])
+            root_span.set_attribute("incident.attempts", attempts)
+            root_span.set_attribute("incident.status", "resolved" if self_check_passed else "escalated")
+
+            if self_check_passed:
+                root_span.add_event("incident_resolved", {"attempts": attempts})
+            else:
+                root_span.add_event("incident_escalated", {"attempts": attempts})
 
             logger.info(
-                "[telemetry] model=%s input=%d output=%d cost=$%.6f real_usage=%s",
+                "[telemetry] model=%s input=%d output=%d cost=$%.6f attempts=%d resolved=%s",
                 model,
                 tokens["input"],
                 tokens["output"],
                 cost_usd,
-                "yes" if best_tokens is not None else "estimated",
+                attempts,
+                self_check_passed,
             )
 
             token_counter.add(tokens["input"] + tokens["output"], {"model": model})
@@ -168,7 +214,8 @@ class ReliabilityAgent:
                 extra={
                     "incident.id": incident_id,
                     "trace.id": trace_id,
-                    "llm.tokens.total": tokens["input"] + tokens["output"],
+                    "attempts": attempts,
+                    "resolved": self_check_passed,
                     "llm.cost.usd": cost_usd,
                 },
             )
@@ -177,4 +224,6 @@ class ReliabilityAgent:
                 "incident_id": incident_id,
                 "trace_id": trace_id,
                 "result": result,
+                "attempts": attempts,
+                "resolved": self_check_passed,
             }
