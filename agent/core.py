@@ -1,11 +1,10 @@
 """ReliabilityAgent core orchestration."""
 import os
 import warnings
-warnings.filterwarnings("ignore", category=UserWarning, module="litellm")
 from google.adk.agents import Agent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
-from google.adk.models.lite_llm import LiteLlm
+from google.adk.models.google_llm import Gemini
 from google.genai import types
 from opentelemetry import trace
 
@@ -35,16 +34,9 @@ class ReliabilityAgent:
             verify_investigation_thoroughness,
         ]
 
-        openrouter_key = os.getenv("OPENROUTER_API_KEY", "")
-        openrouter_model = os.getenv("OPENROUTER_MODEL", "openrouter/openai/gpt-4o-mini")
-
-        if openrouter_key:
-            os.environ.setdefault("OPENROUTER_API_KEY", openrouter_key)
-            self._model_name = openrouter_model
-            model = LiteLlm(model=openrouter_model)
-        else:
-            self._model_name = os.getenv("VERTEX_AI_MODEL", "gemini-2.5-pro")
-            model = self._model_name
+        gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+        self._model_name = gemini_model
+        model = Gemini(model=gemini_model)
 
         self.agent = Agent(
             model=model,
@@ -93,13 +85,15 @@ class ReliabilityAgent:
         return {"input": input_tokens, "output": max(input_tokens // 3, 80)}
 
     def _compute_cost(self, tokens: dict, model: str) -> float:
-        """Compute USD cost based on model pricing."""
+        """Compute USD cost based on Gemini model pricing (Google AI Studio rates)."""
         inp, out = tokens["input"], tokens["output"]
-        if "gpt-4o-mini" in model:
-            return (inp * 0.00000015) + (out * 0.00000060)
-        if "claude-3.5-sonnet" in model or "claude-3-5-sonnet" in model:
-            return (inp * 0.000003) + (out * 0.000015)
-        # Gemini 2.0 flash / default
+        if "gemini-2.5-pro" in model:
+            return (inp * 0.00000125) + (out * 0.00000500)
+        if "gemini-1.5-pro" in model:
+            return (inp * 0.00000125) + (out * 0.00000500)
+        if "gemini-1.5-flash" in model:
+            return (inp * 0.000000075) + (out * 0.00000030)
+        # gemini-2.0-flash (default)
         return (inp * 0.00000010) + (out * 0.00000040)
 
     async def handle_incident(self, incident_id: str, alert_text: str):

@@ -5,6 +5,7 @@
 ReliabilityAgent investigates production incidents, executes remediation runbooks, and then — before closing — queries Dynatrace Grail to verify its own investigation was deep enough. If it wasn't, it reinvestigates. Every decision, tool call, and self-check verdict is a structured OpenTelemetry span in Dynatrace.
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?logo=python&logoColor=white)](https://python.org)
+[![Gemini](https://img.shields.io/badge/Gemini-2.0%20Flash-4285F4?logo=googlegemini&logoColor=white)](https://ai.google.dev)
 [![Google ADK](https://img.shields.io/badge/Google%20ADK-2.1.0-4285F4?logo=googlecloud&logoColor=white)](https://google.github.io/adk-docs/)
 [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-OTLP%20HTTP-7b52ab?logo=opentelemetry&logoColor=white)](https://opentelemetry.io)
 [![Dynatrace](https://img.shields.io/badge/Dynatrace-Grail%20DQL-00a6c8)](https://www.dynatrace.com)
@@ -90,7 +91,7 @@ verify_investigation_thoroughness(trace_id, incident_id)
 │    └── Runner + InMemorySessionService                           │
 │          │                                                       │
 │          ▼                                                       │
-│  LLM (gpt-4o-mini via OpenRouter, LiteLlm adapter)               │ 
+│  LLM (Gemini 2.0 Flash via Google ADK native)                         │ 
 │    ◄── TRIAGE_PROMPT + INCIDENT_PROMPT_TEMPLATE                  │
 │          │                                                       │
 │          ▼                                                       │
@@ -123,7 +124,7 @@ verify_investigation_thoroughness(trace_id, incident_id)
 
 ## Installation
 
-**Requirements:** Python 3.11+, a Dynatrace environment, an OpenRouter API key.
+**Requirements:** Python 3.11+, a Dynatrace environment, a Google AI Studio API key.
 
 ```bash
 git clone https://github.com/RobertSamuel-tech/ReliabilityAgent.git
@@ -145,11 +146,12 @@ pip install -r requirements.txt
 Copy `.env.example` to `.env` and populate:
 
 ```env
-# ── LLM ─────────────────────────────────────────────────────────────────────
-# OpenRouter provides access to 200+ models via an OpenAI-compatible API.
-# Get your key at https://openrouter.ai
-OPENROUTER_API_KEY=sk-or-v1-...
-OPENROUTER_MODEL=openrouter/openai/gpt-4o-mini
+# ── Google AI Studio ─────────────────────────────────────────────────────────
+# Get your key at https://aistudio.google.com/app/apikey
+GOOGLE_API_KEY=AIzaSy...
+
+# Gemini model via Google ADK (gemini-2.0-flash recommended for speed + cost)
+GEMINI_MODEL=gemini-2.0-flash
 
 # ── Dynatrace ────────────────────────────────────────────────────────────────
 # Classic API token — needs scopes: openTelemetryTrace.ingest, logs.ingest
@@ -254,7 +256,7 @@ Triggers an asynchronous incident investigation.
 }
 ```
 
-The agent runs in a FastAPI `BackgroundTask`. The LLM (gpt-4o-mini) reliably invokes tools in this execution context. Direct Python invocations are non-deterministic for tool calls.
+The agent runs in a FastAPI `BackgroundTask`. The LLM (gemini-2.0-flash) reliably invokes tools in this execution context. Direct Python invocations are non-deterministic for tool calls.
 
 ---
 
@@ -453,7 +455,7 @@ ReliabilityAgent/
 cd infra && terraform init && terraform apply
 ```
 
-Terraform provisions Cloud Run, IAM bindings, and secret injection for Dynatrace and OpenRouter credentials.
+Terraform provisions Cloud Run, IAM bindings, and secret injection for Dynatrace and Google AI Studio credentials.
 
 ### Docker
 
@@ -505,4 +507,4 @@ MIT — see [LICENSE](LICENSE).
 
 ---
 
-*Google ADK · OpenRouter · gpt-4o-mini · OpenTelemetry · Dynatrace Grail*
+*Google ADK · Gemini 2.0 Flash · Google AI Studio · OpenTelemetry · Dynatrace Grail*
