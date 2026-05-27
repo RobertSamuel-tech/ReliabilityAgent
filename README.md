@@ -25,6 +25,7 @@ ReliabilityAgent investigates production incidents, executes remediation runbook
 - [Observability Contract](#observability-contract)
 - [Self-Check Logic](#self-check-logic)
 - [Grail DQL Integration](#grail-dql-integration)
+- [Dashboard](#dashboard)
 - [Project Structure](#project-structure)
 - [Deployment](#deployment)
 - [Roadmap](#roadmap)
@@ -89,7 +90,7 @@ verify_investigation_thoroughness(trace_id, incident_id)
 │    └── Runner + InMemorySessionService                           │
 │          │                                                       │
 │          ▼                                                       │
-│  LLM (gpt-4o-mini via OpenRouter, LiteLlm adapter)              │
+│  LLM (gpt-4o-mini via OpenRouter, LiteLlm adapter)               │ 
 │    ◄── TRIAGE_PROMPT + INCIDENT_PROMPT_TEMPLATE                  │
 │          │                                                       │
 │          ▼                                                       │
@@ -103,7 +104,7 @@ verify_investigation_thoroughness(trace_id, incident_id)
 │  │    _thoroughness          + in-process registry   │           │
 │  └───────────────────────────────────────────────────┘           │
 │          │                                                       │
-│  _tool_registry.py  (trace_id → [tool_names], module-level)     │
+│  _tool_registry.py  (trace_id → [tool_names], module-level)      │
 └───────────────────────────────┬──────────────────────────────────┘
                                 │ OTLP HTTP protobuf
                                 │ BatchSpanProcessor (5s interval)
@@ -111,10 +112,10 @@ verify_investigation_thoroughness(trace_id, incident_id)
 ┌──────────────────────────────────────────────────────────────────┐
 │  Dynatrace                                                       │
 │                                                                  │
-│  POST /api/v2/otlp/v1/traces    ← span ingest                   │
-│  POST /platform/storage/query   ← Grail DQL self-observation    │
+│  POST /api/v2/otlp/v1/traces    ← span ingest                    │
+│  POST /platform/storage/query   ← Grail DQL self-observation     │
 │                                                                  │
-│  Distributed Trace Waterfall · Span Attributes · Cost Metrics   │
+│  Distributed Trace Waterfall · Span Attributes · Cost Metrics    │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -219,6 +220,16 @@ Distributed Traces → filter: service.name = "reliability-agent"
 
 ## API Reference
 
+### `GET /health`
+
+Returns agent and observability status.
+
+```json
+{ "status": "healthy", "observability": "active", "agent": "ready" }
+```
+
+---
+
 ### `POST /handle-incident`
 
 Triggers an asynchronous incident investigation.
@@ -247,6 +258,27 @@ The agent runs in a FastAPI `BackgroundTask`. The LLM (gpt-4o-mini) reliably inv
 
 ---
 
+### `POST /demo/incident`
+
+Fires a pre-canned P1 incident (`INC-DEMO-007`) with a realistic alert — no payload required. Useful for seeding Dynatrace traces before a demo.
+
+```bash
+curl -X POST http://localhost:8000/demo/incident
+```
+
+**Response `200 OK`:**
+
+```json
+{
+  "status": "Agent investigating",
+  "incident_id": "INC-DEMO-007",
+  "trace_id": "See Dynatrace Distributed Traces",
+  "message": "Watch server logs and Dynatrace for live trace progress."
+}
+```
+
+---
+
 ## Observability Contract
 
 Every agent run produces the following OTel spans. All spans share the same `trace_id`, propagated from the root span through all child tool spans.
@@ -261,7 +293,7 @@ Every agent run produces the following OTel spans. All spans share the same `tra
 | `llm.model` | string | Model identifier |
 | `llm.tokens.input` | int | Input token count |
 | `llm.tokens.output` | int | Output token count |
-| `llm.cost.usd` | float | Estimated USD cost |
+| `llm.cost.usd` | float | Real USD cost (input + output tokens × model pricing) |
 
 ### Tool spans: `agent.tool.*`
 
@@ -351,6 +383,36 @@ Classic API tokens cannot authenticate to `apps.dynatrace.com` platform endpoint
 
 ---
 
+## Dashboard
+
+`config/dynatrace_dashboards.json` contains a ready-to-import Dynatrace dashboard (version 16 platform format, Grail DQL tiles).
+
+**Import:** Dashboards → Upload → select `config/dynatrace_dashboards.json`
+
+| Tile | DQL Query | Visualization |
+|---|---|---|
+| Total Incidents Handled | `fetch spans \| filter span.name == "agent.incident.handle" \| summarize count()` | Single value |
+| Avg Cost per Incident | Avg of `llm.cost.usd` on root spans | Single value |
+| Self-Check Reinvestigation Rate | Count by `self_check.retry_triggered` | Pie chart |
+| Investigation Verdicts | Count by `self_check.verdict` | Pie chart |
+| LLM Token Cost Over Time | Sum of `llm.cost.usd` by 5-minute bucket | Line chart |
+| Phase Duration Breakdown | Avg duration by `agent.phase.*` span name | Bar chart |
+| Recent Incidents | Latest 20 root spans with cost + token attributes | Table |
+
+For step-by-step manual build instructions (fallback if JSON import fails), see [DASHBOARD_BUILD.md](DASHBOARD_BUILD.md).
+
+**Seeding data before a demo:**
+
+```bash
+curl -X POST http://localhost:8000/demo/incident
+curl -X POST http://localhost:8000/demo/incident
+curl -X POST http://localhost:8000/demo/incident
+```
+
+Wait 60–90 seconds, then open Distributed Traces filtered on `service.name = reliability-agent`. The dashboard tiles populate automatically once Grail indexes the spans.
+
+---
+
 ## Project Structure
 
 ```
@@ -369,7 +431,8 @@ ReliabilityAgent/
 │   └── logger.py                  # Structured logger with OTel trace correlation
 ├── config/
 │   ├── otel-collector-config.yaml # Optional OTel Collector config
-│   └── dynatrace_dashboards.json  # Importable Dynatrace command center dashboard
+│   └── dynatrace_dashboards.json  # Importable Dynatrace dashboard (version 16, DQL tiles)
+├── DASHBOARD_BUILD.md             # Manual dashboard build guide + demo playbook
 ├── infra/                         # Terraform: Cloud Run, IAM, env injection
 ├── main.py                        # FastAPI entrypoint
 ├── tests/

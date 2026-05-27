@@ -60,26 +60,37 @@ class ReliabilityAgent:
             session_service=InMemorySessionService(),
         )
 
-    def _extract_token_usage(self, result) -> dict:
-        """Extract token usage from ADK event — handles Gemini and OpenAI/LiteLlm formats."""
+    def _extract_token_usage(self, event) -> dict | None:
+        """Try to extract real token counts from an ADK event. Returns None if not found."""
         try:
-            um = getattr(result, "usage_metadata", None)
+            um = getattr(event, "usage_metadata", None)
             if um:
-                # Gemini format
+                # Gemini / ADK native format
                 inp = getattr(um, "prompt_token_count", None)
                 out = getattr(um, "candidates_token_count", None)
-                if inp is not None and out is not None:
+                if inp is not None and out is not None and (inp > 0 or out > 0):
                     return {"input": int(inp), "output": int(out)}
-                # OpenAI-normalized format
+                # OpenAI-normalised format (LiteLLM adapter)
                 inp = getattr(um, "input_tokens", None) or getattr(um, "prompt_tokens", None)
                 out = getattr(um, "output_tokens", None) or getattr(um, "completion_tokens", None)
-                if inp is not None and out is not None:
+                if inp is not None and out is not None and (inp > 0 or out > 0):
+                    return {"input": int(inp), "output": int(out)}
+            # LiteLLM may surface usage directly on the event object
+            usage = getattr(event, "usage", None)
+            if usage:
+                inp = getattr(usage, "prompt_tokens", None)
+                out = getattr(usage, "completion_tokens", None)
+                if inp is not None and out is not None and (inp > 0 or out > 0):
                     return {"input": int(inp), "output": int(out)}
         except Exception:
             pass
-        content_str = str(result)
-        input_tokens = max(len(content_str) // 4, 200)
-        return {"input": input_tokens, "output": input_tokens // 3}
+        return None  # caller must fall back to estimate
+
+    def _estimate_token_usage(self, result) -> dict:
+        """Estimate tokens from response text when real data is unavailable."""
+        content_str = str(result) if result is not None else ""
+        input_tokens = max(len(content_str) // 4, 250)
+        return {"input": input_tokens, "output": max(input_tokens // 3, 80)}
 
     def _compute_cost(self, tokens: dict, model: str) -> float:
         """Compute USD cost based on model pricing."""
@@ -117,22 +128,37 @@ class ReliabilityAgent:
             )
 
             result = None
+            best_tokens: dict | None = None
             async for event in self.runner.run_async(
                 session_id=session.id,
                 user_id="system",
                 new_message=types.Content(role="user", parts=[types.Part(text=content)])
             ):
                 result = event
+                # Accumulate across all events — prefer the reading with the most tokens
+                ev_tok = self._extract_token_usage(event)
+                if ev_tok is not None:
+                    if best_tokens is None or ev_tok["input"] > best_tokens["input"]:
+                        best_tokens = ev_tok
 
-            tokens = self._extract_token_usage(result)
+            tokens = best_tokens if best_tokens is not None else self._estimate_token_usage(result)
             model = self._model_name
             cost_usd = self._compute_cost(tokens, model)
 
-            root_span.set_attribute("llm.tokens.input", tokens["input"])
-            root_span.set_attribute("llm.tokens.output", tokens["output"])
+            root_span.set_attribute("llm.tokens.input", int(tokens["input"]))
+            root_span.set_attribute("llm.tokens.output", int(tokens["output"]))
             root_span.set_attribute("llm.model", model)
-            root_span.set_attribute("llm.cost.usd", cost_usd)
+            root_span.set_attribute("llm.cost.usd", float(cost_usd))
             root_span.set_attribute("agent.result", str(result)[:500])
+
+            logger.info(
+                "[telemetry] model=%s input=%d output=%d cost=$%.6f real_usage=%s",
+                model,
+                tokens["input"],
+                tokens["output"],
+                cost_usd,
+                "yes" if best_tokens is not None else "estimated",
+            )
 
             token_counter.add(tokens["input"] + tokens["output"], {"model": model})
             incident_cost.record(cost_usd, {"incident.id": incident_id})

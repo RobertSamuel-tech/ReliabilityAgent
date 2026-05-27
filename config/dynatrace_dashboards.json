@@ -1,62 +1,111 @@
 {
-  "metadata": {
-    "configurationVersions": [7],
-    "clusterVersion": "1.0.0"
-  },
-  "dashboardMetadata": {
-    "name": "ReliabilityAgent ROI Command Center",
-    "shared": true,
-    "owner": "hackathon-team",
-    "tags": ["ai-agent", "observability", "reliability"]
-  },
-  "tiles": [
-    {
-      "name": "Incidents Handled",
-      "tileType": "DATA_EXPLORER",
-      "configured": true,
-      "bounds": {"top": 0, "left": 0, "width": 304, "height": 304},
-      "queries": [
-        {
-          "id": "A",
-          "metric": "builtin:service.requestCount",
-          "spaceAggregation": "SUM",
-          "filter": "service.name:reliability-agent"
-        }
-      ]
+  "version": 16,
+  "variables": [],
+  "tiles": {
+    "0": {
+      "type": "markdown",
+      "title": "",
+      "content": "## 🔁 ReliabilityAgent: Self-Observing AI\n**The AI agent that diagnoses incidents, remediates them, AND verifies its own work via Dynatrace.**\n**Architecture:** Google ADK + Gemini 2.5 Pro | **Telemetry:** OTel SDK → Dynatrace Grail | **Differentiator:** Recursive self-observability loop (queries own traces to ensure thoroughness)."
     },
-    {
-      "name": "Token Cost Trend",
-      "tileType": "DATA_EXPLORER",
-      "configured": true,
-      "bounds": {"top": 0, "left": 304, "width": 304, "height": 304},
-      "queries": [
-        {
-          "id": "B",
-          "metric": "custom:agent.tokens.total",
-          "spaceAggregation": "SUM",
-          "splitBy": ["model"]
+    "1": {
+      "type": "dql",
+      "title": "Total Incidents Handled",
+      "query": "fetch spans\n| filter span.name == \"agent.incident.handle\"\n| summarize count()",
+      "visualization": "singleValue",
+      "visualizationSettings": {
+        "singleValue": {
+          "showLabel": true,
+          "label": "Incidents",
+          "autoscale": true,
+          "alignment": "center"
         }
-      ]
+      }
     },
-    {
-      "name": "Self-Check Outcomes",
-      "tileType": "DATA_EXPLORER",
-      "configured": true,
-      "bounds": {"top": 0, "left": 608, "width": 304, "height": 304},
-      "queries": [
-        {
-          "id": "C",
-          "metric": "custom:agent.self_check.verdict",
-          "spaceAggregation": "AVG"
+    "2": {
+      "type": "dql",
+      "title": "Avg Cost per Incident (USD)",
+      "query": "fetch spans\n| filter span.name == \"agent.incident.handle\"\n| filter isNotNull(span.attributes[\"llm.cost.usd\"])\n| summarize avgCost = avg(toDouble(span.attributes[\"llm.cost.usd\"]))\n| fields avgCost",
+      "visualization": "singleValue",
+      "visualizationSettings": {
+        "singleValue": {
+          "showLabel": true,
+          "label": "Avg USD",
+          "autoscale": true,
+          "alignment": "center"
         }
-      ]
+      }
     },
-    {
-      "name": "Agent Architecture",
-      "tileType": "MARKDOWN",
-      "configured": true,
-      "bounds": {"top": 304, "left": 0, "width": 912, "height": 200},
-      "markdown": "## ReliabilityAgent: Self-Observing AI\n\n- **Agent**: Vertex AI + ADK + Gemini 2.5 Pro\n- **Observability**: OpenTelemetry → Collector → Dynatrace\n- **Pipeline**: Cost transformation, GCP enrichment, batching\n- **Loop**: Agent queries its own trace to verify investigation thoroughness\n\n**Architecture**: Agent → OTel SDK → Collector → Dynatrace → Agent queries back"
+    "3": {
+      "type": "dql",
+      "title": "Self-Check Reinvestigation Rate",
+      "query": "fetch spans\n| filter span.name == \"agent.phase.self_check\"\n| summarize count(), by: trigger = span.attributes[\"self_check.retry_triggered\"]",
+      "visualization": "pieChart",
+      "visualizationSettings": {
+        "pieChart": {
+          "legend": { "hidden": false }
+        }
+      }
+    },
+    "4": {
+      "type": "dql",
+      "title": "Investigation Verdicts",
+      "query": "fetch spans\n| filter span.name == \"agent.phase.self_check\"\n| summarize count(), by: verdict = span.attributes[\"self_check.verdict\"]",
+      "visualization": "pieChart",
+      "visualizationSettings": {
+        "pieChart": {
+          "legend": { "hidden": false }
+        }
+      }
+    },
+    "5": {
+      "type": "dql",
+      "title": "LLM Token Cost Over Time",
+      "query": "fetch spans\n| filter span.name == \"agent.incident.handle\"\n| filter isNotNull(span.attributes[\"llm.cost.usd\"])\n| summarize cost = sum(toDouble(span.attributes[\"llm.cost.usd\"])), by: bin(timestamp, 5m)",
+      "visualization": "lineChart",
+      "visualizationSettings": {
+        "lineChart": {
+          "legend": { "hidden": false }
+        }
+      }
+    },
+    "6": {
+      "type": "dql",
+      "title": "Agent Investigation Phases Duration",
+      "query": "fetch spans\n| filter startsWith(span.name, \"agent.phase.\")\n| summarize avgDuration = avg(duration), by: phase = span.name",
+      "visualization": "barChart",
+      "visualizationSettings": {
+        "barChart": {
+          "legend": { "hidden": false }
+        }
+      }
+    },
+    "7": {
+      "type": "dql",
+      "title": "Recent Incidents & Self-Check Status",
+      "query": "fetch spans\n| filter span.name == \"agent.incident.handle\"\n| fields timestamp, IncidentID = span.attributes[\"incident.id\"], Severity = span.attributes[\"incident.severity\"], Model = span.attributes[\"llm.model\"], TotalCost = span.attributes[\"llm.cost.usd\"], InputTokens = span.attributes[\"llm.tokens.input\"], OutputTokens = span.attributes[\"llm.tokens.output\"]\n| sort timestamp desc\n| limit 20",
+      "visualization": "table",
+      "visualizationSettings": {
+        "table": {
+          "rowDensity": "DEFAULT",
+          "enableLineWrap": true,
+          "hiddenColumns": []
+        }
+      }
     }
-  ]
+  },
+  "layouts": {
+    "0": {
+      "displayedColumns": 12,
+      "tiles": [
+        { "tileId": "0", "x": 0, "y": 0,  "w": 12, "h": 2 },
+        { "tileId": "1", "x": 0, "y": 2,  "w": 3,  "h": 4 },
+        { "tileId": "2", "x": 3, "y": 2,  "w": 3,  "h": 4 },
+        { "tileId": "3", "x": 6, "y": 2,  "w": 3,  "h": 4 },
+        { "tileId": "4", "x": 9, "y": 2,  "w": 3,  "h": 4 },
+        { "tileId": "5", "x": 0, "y": 6,  "w": 6,  "h": 6 },
+        { "tileId": "6", "x": 6, "y": 6,  "w": 6,  "h": 6 },
+        { "tileId": "7", "x": 0, "y": 12, "w": 12, "h": 6 }
+      ]
+    }
+  }
 }
