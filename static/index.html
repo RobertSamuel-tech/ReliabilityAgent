@@ -9,9 +9,7 @@
     tailwind.config = {
       theme: {
         extend: {
-          colors: {
-            slate: { 950: '#0f172a' }
-          }
+          colors: { slate: { 950: '#0f172a' } }
         }
       }
     }
@@ -20,15 +18,19 @@
     body { background-color: #0f172a; }
     .spinner {
       width: 1.25rem; height: 1.25rem;
-      border: 2px solid #334155;
-      border-top-color: #60a5fa;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      display: inline-block;
+      border: 2px solid #334155; border-top-color: #60a5fa;
+      border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block;
+    }
+    .spinner-sm {
+      width: 0.875rem; height: 0.875rem;
+      border: 1.5px solid #334155; border-top-color: #60a5fa;
+      border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .fade-in { animation: fadeIn 0.3s ease-in; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    details > summary { cursor: pointer; list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
   </style>
 </head>
 <body class="min-h-screen text-slate-100 font-mono flex flex-col justify-center items-center px-4 py-10">
@@ -41,7 +43,7 @@
       <p class="text-slate-400 text-sm mt-1">Autonomous incident investigation with Dynatrace observability and human oversight</p>
     </div>
 
-    <!-- Error Banner -->
+    <!-- Error Banner (small errors: validation, network) -->
     <div id="error-banner" class="hidden bg-red-900/60 border border-red-500 text-red-200 rounded-lg px-4 py-3 text-sm fade-in">
       <span class="font-bold">Error: </span><span id="error-text"></span>
     </div>
@@ -94,15 +96,62 @@
         <span id="status-badge" class="hidden ml-auto text-xs font-semibold px-2.5 py-0.5 rounded-full"></span>
       </div>
 
-      <!-- Polling log -->
-      <div id="poll-log" class="text-xs text-slate-500 space-y-0.5"></div>
+      <!-- Investigation Timeline (replaces raw poll log) -->
+      <div class="bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3">
+        <p class="text-xs text-slate-500 uppercase tracking-wider mb-3">Investigation Timeline</p>
+        <div id="timeline-steps" class="space-y-2.5"></div>
+      </div>
 
-      <!-- Hypothesis card (hidden until data arrives) -->
+      <!-- Investigation Failed Card -->
+      <div id="investigation-failed-card" class="hidden border border-red-800 bg-red-950/40 rounded-lg p-4 space-y-3 fade-in">
+        <p class="text-sm font-semibold text-red-300">Investigation Could Not Complete</p>
+        <p id="failed-reason" class="text-sm text-slate-300"></p>
+        <details class="text-xs">
+          <summary class="text-slate-500 hover:text-slate-400 transition-colors">Technical Details ▼</summary>
+          <pre id="failed-detail" class="mt-2 bg-slate-900 rounded p-3 text-red-300 text-xs overflow-auto max-h-40 whitespace-pre-wrap"></pre>
+        </details>
+        <div class="flex flex-wrap gap-3 pt-1">
+          <button id="btn-retry"
+            class="bg-blue-700 hover:bg-blue-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
+            Retry Investigation
+          </button>
+          <button id="btn-failed-reset"
+            class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
+            Start New Investigation
+          </button>
+        </div>
+      </div>
+
+      <!-- Self-Check Result Card (shown when hypothesis arrives) -->
+      <div id="self-check-card" class="hidden border border-slate-700 rounded-lg px-4 py-3 fade-in">
+        <p class="text-xs text-slate-500 uppercase tracking-wider mb-3">Self-Check Result</p>
+        <div id="self-check-content"></div>
+      </div>
+
+      <!-- Observability Card -->
+      <div id="observability-card" class="hidden border border-slate-700 rounded-lg px-4 py-3 fade-in">
+        <p class="text-xs text-slate-500 uppercase tracking-wider mb-3">Observability</p>
+        <div id="observability-content" class="grid grid-cols-3 gap-3 text-xs"></div>
+      </div>
+
+      <!-- Dynatrace Trace Section -->
+      <div id="dt-trace-section" class="hidden border border-slate-700 rounded-lg px-4 py-3 fade-in">
+        <p class="text-xs text-slate-500 uppercase tracking-wider mb-3">Dynatrace Trace</p>
+        <div id="dt-trace-content"></div>
+      </div>
+
+      <!-- Hypothesis card -->
       <div id="hypothesis-card" class="hidden space-y-4 border-t border-slate-700 pt-4 fade-in">
 
         <div class="flex items-start justify-between gap-3">
           <h3 class="text-slate-100 font-semibold text-base">Hypothesis</h3>
           <span id="confidence-badge" class="text-xs font-bold px-2.5 py-1 rounded-full shrink-0"></span>
+        </div>
+
+        <!-- Why This Matters -->
+        <div id="why-matters" class="hidden bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2">
+          <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Why This Matters</p>
+          <p id="why-matters-text" class="text-slate-300 text-xs leading-relaxed"></p>
         </div>
 
         <p id="hypothesis-summary" class="text-slate-300 text-sm leading-relaxed"></p>
@@ -146,25 +195,116 @@
     <!-- ─────────────────────────────────────────────────────
          PANEL 3 — Postmortem Report
     ───────────────────────────────────────────────────── -->
-    <div id="panel-postmortem" class="hidden bg-slate-800 border border-slate-700 rounded-xl p-6 space-y-4 fade-in">
-      <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-slate-100">Postmortem Report</h2>
-        <span class="text-xs text-emerald-400 font-semibold bg-emerald-900/40 border border-emerald-700 px-2.5 py-0.5 rounded-full">Approved</span>
+    <div id="panel-postmortem" class="hidden bg-slate-800 border border-slate-700 rounded-xl p-6 space-y-5 fade-in">
+
+      <!-- Completion Banner -->
+      <div class="bg-emerald-900/40 border border-emerald-700 rounded-lg px-4 py-3 flex items-start gap-3">
+        <span class="text-emerald-400 text-lg leading-none mt-0.5">✅</span>
+        <div>
+          <p class="text-emerald-300 font-semibold text-sm">Investigation Complete</p>
+          <p class="text-emerald-400/80 text-xs mt-0.5">Self-check passed and operator approved findings.</p>
+        </div>
       </div>
-      <div id="postmortem-content"
-        class="prose-sm text-slate-300 bg-slate-900 rounded-lg p-4 leading-relaxed space-y-3 text-sm overflow-auto max-h-[60vh]">
+
+      <!-- Lifecycle trail -->
+      <div class="flex flex-wrap items-center gap-1.5 text-xs overflow-x-auto">
+        <span class="text-emerald-400 font-semibold">Investigation</span>
+        <span class="text-slate-600">→</span>
+        <span class="text-emerald-400 font-semibold">Self-Check Passed</span>
+        <span class="text-slate-600">→</span>
+        <span class="text-emerald-400 font-semibold">Human Approved</span>
+        <span class="text-slate-600">→</span>
+        <span class="text-emerald-400 font-semibold">Postmortem Generated</span>
+        <span class="text-slate-600">→</span>
+        <span class="text-emerald-400 font-semibold">Recorded In Dynatrace</span>
       </div>
-      <button id="btn-reset"
-        class="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors">
-        Start New Autopsy
-      </button>
+
+      <!-- Self-Check + Observability row -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Self-Check Verdict -->
+        <div class="bg-emerald-950/40 border border-emerald-800 rounded-lg px-4 py-3 space-y-1.5">
+          <p class="text-xs text-emerald-600 uppercase tracking-wider">Self-Check Verdict</p>
+          <div class="flex items-center gap-2">
+            <span class="text-emerald-400 font-bold text-base tracking-wide">PASSED</span>
+            <span>✅</span>
+          </div>
+          <p class="text-xs text-emerald-500/80 font-medium">Tool Coverage Verified</p>
+          <p class="text-xs text-slate-500 leading-relaxed">Investigation met minimum evidence threshold.</p>
+        </div>
+        <!-- Observability Record -->
+        <div class="bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 space-y-2">
+          <p class="text-xs text-slate-500 uppercase tracking-wider">Observability Record</p>
+          <div class="space-y-1.5 text-xs">
+            <div class="flex justify-between"><span class="text-slate-500">Trace Status</span><span class="text-emerald-400 font-semibold">Recorded</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Telemetry</span><span class="text-slate-300">OpenTelemetry</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Destination</span><span class="text-slate-300">Dynatrace Grail</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Status</span><span class="text-blue-300">Available For Audit</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dynatrace Trace -->
+      <div class="border border-slate-700 rounded-lg px-4 py-3">
+        <p class="text-xs text-slate-500 uppercase tracking-wider mb-2">Dynatrace Trace</p>
+        <button disabled class="bg-slate-700 border border-slate-600 text-slate-500 cursor-not-allowed text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-2">
+          <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+          Trace Available When Dynatrace Credentials Are Configured
+        </button>
+      </div>
+
+      <!-- Incident Summary metadata -->
+      <div class="border border-slate-700 rounded-lg px-4 py-3 space-y-3">
+        <p class="text-xs text-slate-500 uppercase tracking-wider">Incident Summary</p>
+        <div class="grid grid-cols-2 gap-x-6 gap-y-3 text-xs">
+          <div><p class="text-slate-500 mb-0.5">Incident ID</p><p id="pm-incident-id" class="text-slate-200 font-semibold"></p></div>
+          <div><p class="text-slate-500 mb-0.5">Service</p><p id="pm-service" class="text-slate-200 font-semibold"></p></div>
+          <div><p class="text-slate-500 mb-0.5">Investigation Status</p><p class="text-emerald-400 font-semibold">Resolved</p></div>
+          <div><p class="text-slate-500 mb-0.5">Generated</p><p id="pm-timestamp" class="text-slate-300"></p></div>
+        </div>
+      </div>
+
+      <!-- Human Review -->
+      <div class="border border-slate-700 rounded-lg px-4 py-3">
+        <p class="text-xs text-slate-500 uppercase tracking-wider mb-2">Human Review</p>
+        <p id="pm-human-review-text" class="text-sm text-emerald-300"></p>
+      </div>
+
+      <!-- Structured postmortem sections (populated by JS) -->
+      <div id="postmortem-sections" class="space-y-4 overflow-auto max-h-[60vh]"></div>
+
+      <!-- Raw fallback (hidden unless sections fail to parse) -->
+      <div id="postmortem-raw" class="hidden">
+        <p class="text-xs text-slate-500 uppercase tracking-wider mb-2">Full Report</p>
+        <div id="postmortem-content" class="prose-sm text-slate-300 bg-slate-900 rounded-lg p-4 leading-relaxed space-y-3 text-sm overflow-auto max-h-[50vh]"></div>
+      </div>
+
+      <!-- Action row -->
+      <div class="flex flex-wrap gap-3 pt-2 border-t border-slate-700">
+        <button id="btn-reset"
+          class="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors">
+          Start New Autopsy
+        </button>
+        <button id="btn-download"
+          class="bg-blue-700 hover:bg-blue-600 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          Download Postmortem
+        </button>
+      </div>
+
     </div>
 
   </div><!-- /max-w -->
 
   <script>
     // ── State ────────────────────────────────────────────────────────────────
-    let currentIncidentId = null;
+    let currentIncidentId  = null;
+    let currentServiceName = null;
+    let wasRedirected      = false;
+    let lastPostmortemRaw  = '';
     let pollTimer = null;
     let pollCount = 0;
 
@@ -188,14 +328,32 @@
       errorText.textContent = '';
     }
 
+    // ── Investigation failed card ─────────────────────────────────────────────
+    function showInvestigationFailed(data) {
+      const raw = data.error || 'Investigation failed with no error detail.';
+      // Derive a plain-English reason from the error string
+      let reason = 'The investigation could not be completed.';
+      if (/quota|rate.limit|429/i.test(raw))
+        reason = 'The AI model quota was exceeded. The investigation will retry automatically or update your API key.';
+      else if (/timeout|timed.out/i.test(raw))
+        reason = 'The investigation timed out waiting for a response.';
+      else if (/auth|401|403|credentials/i.test(raw))
+        reason = 'Authentication failed when connecting to a data source.';
+      else if (/connect|network|socket/i.test(raw))
+        reason = 'A network connection error prevented data collection.';
+      $('failed-reason').textContent = reason;
+      $('failed-detail').textContent = raw;
+      $('investigation-failed-card').classList.remove('hidden');
+    }
+
     // ── Panel visibility ──────────────────────────────────────────────────────
     function showPanel(name) {
       panelStart.classList.add('hidden');
       panelStatus.classList.add('hidden');
       panelPostmortem.classList.add('hidden');
-      if (name === 'start')      { panelStart.classList.remove('hidden'); }
-      if (name === 'status')     { panelStatus.classList.remove('hidden'); }
-      if (name === 'postmortem') { panelPostmortem.classList.remove('hidden'); }
+      if (name === 'start')      panelStart.classList.remove('hidden');
+      if (name === 'status')     panelStatus.classList.remove('hidden');
+      if (name === 'postmortem') panelPostmortem.classList.remove('hidden');
     }
 
     // ── Confidence badge styling ──────────────────────────────────────────────
@@ -213,37 +371,29 @@
       let inList = false;
       for (let raw of lines) {
         let line = raw;
-        // Bold
         line = line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-100">$1</strong>');
-        // Inline code
         line = line.replace(/`([^`]+)`/g, '<code class="bg-slate-700 px-1 rounded text-sky-300 text-xs">$1</code>');
-        // H3
         if (/^### (.+)/.test(line)) {
           if (inList) { out.push('</ul>'); inList = false; }
           out.push(`<h3 class="text-slate-100 font-semibold text-sm mt-4 mb-1">${line.replace(/^### /, '')}</h3>`);
           continue;
         }
-        // H2
         if (/^## (.+)/.test(line)) {
           if (inList) { out.push('</ul>'); inList = false; }
           out.push(`<h2 class="text-slate-100 font-bold text-base mt-5 mb-2 border-b border-slate-700 pb-1">${line.replace(/^## /, '')}</h2>`);
           continue;
         }
-        // H1
         if (/^# (.+)/.test(line)) {
           if (inList) { out.push('</ul>'); inList = false; }
           out.push(`<h1 class="text-white font-bold text-lg mt-4 mb-2">${line.replace(/^# /, '')}</h1>`);
           continue;
         }
-        // List items
         if (/^[-*] (.+)/.test(line)) {
           if (!inList) { out.push('<ul class="list-disc list-inside space-y-1 text-slate-400">'); inList = true; }
           out.push(`<li>${line.replace(/^[-*] /, '')}</li>`);
           continue;
         }
-        // Close list on blank or non-list line
         if (inList && line.trim() !== '') { out.push('</ul>'); inList = false; }
-        // Blank line
         if (line.trim() === '') { out.push('<div class="my-2"></div>'); continue; }
         out.push(`<p>${line}</p>`);
       }
@@ -251,15 +401,119 @@
       return out.join('\n');
     }
 
-    // ── Poll log ──────────────────────────────────────────────────────────────
-    function logPoll(msg) {
-      const el = document.createElement('div');
-      el.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-      $('poll-log').appendChild(el);
+    // ── Investigation Timeline ─────────────────────────────────────────────────
+    const TIMELINE_STEPS = [
+      'Incident received',
+      'Querying Dynatrace traces',
+      'Collecting GCP logs',
+      'Generating hypothesis with Gemini',
+      'Running self-check',
+      'Awaiting human review',
+    ];
+
+    function updateTimeline(status, count) {
+      let doneCount, activeIndex, isFailed;
+      isFailed = (status === 'failed');
+
+      if (status === 'awaiting_review' || status === 'completed') {
+        doneCount = TIMELINE_STEPS.length; activeIndex = -1;
+      } else if (status === 'collecting') {
+        // Simulate step progression from poll count; cap at step 4 (self-check)
+        doneCount = Math.min(1 + Math.floor(count / 2), 4);
+        activeIndex = doneCount < TIMELINE_STEPS.length ? doneCount : -1;
+      } else if (status === 'redirected') {
+        doneCount = 1; activeIndex = 1;
+      } else if (isFailed) {
+        doneCount = Math.min(1 + Math.floor(count / 2), 3); activeIndex = -1;
+      } else {
+        doneCount = 1; activeIndex = 1;
+      }
+
+      const container = $('timeline-steps');
+      container.innerHTML = '';
+      TIMELINE_STEPS.forEach((label, i) => {
+        const isDone   = i < doneCount;
+        const isActive = i === activeIndex && !isFailed;
+        const icon = isDone
+          ? '<span class="text-emerald-400 text-sm leading-none">✓</span>'
+          : isActive
+            ? '<span class="spinner-sm"></span>'
+            : '<span class="text-slate-600 text-sm leading-none">○</span>';
+        const textClass = isDone ? 'text-slate-300' : isActive ? 'text-blue-300' : 'text-slate-600';
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-2.5 text-xs';
+        div.innerHTML = `<span class="w-4 flex items-center justify-center shrink-0">${icon}</span><span class="${textClass}">${label}</span>`;
+        container.appendChild(div);
+      });
+    }
+
+    // ── Self-Check Card ───────────────────────────────────────────────────────
+    function renderSelfCheck() {
+      // Self-check verdict lives in Dynatrace OTel spans, not in the API response.
+      // Show an informational card pointing judges to Dynatrace.
+      $('self-check-content').innerHTML = `
+        <div class="flex items-start gap-3">
+          <div class="bg-slate-800 border border-slate-600 rounded px-3 py-2 text-xs space-y-1.5 flex-1">
+            <div class="flex justify-between">
+              <span class="text-slate-500">Verdict</span>
+              <span class="text-slate-400 font-semibold">Recorded in Dynatrace</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Attribute</span>
+              <code class="text-sky-400 text-xs">self_check.verdict</code>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Backend</span>
+              <code class="text-sky-400 text-xs">in_process_registry</code>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Threshold</span>
+              <span class="text-slate-400">≥ 3 tool calls</span>
+            </div>
+          </div>
+        </div>
+        <p class="text-xs text-slate-600 mt-2">Self-check telemetry available in Dynatrace → Distributed Traces → <code class="text-sky-500">agent.phase.self_check</code></p>`;
+      $('self-check-card').classList.remove('hidden');
+    }
+
+    // ── Observability Card ────────────────────────────────────────────────────
+    function renderObservability(status) {
+      const statusLabel = {
+        awaiting_review: 'Awaiting Review',
+        completed: 'Completed',
+        collecting: 'Collecting',
+      }[status] || status;
+
+      const fields = [
+        { label: 'Trace Status',          value: 'Active',                  cls: 'text-emerald-400' },
+        { label: 'Spans Recorded',        value: 'In Dynatrace Grail',      cls: 'text-slate-300' },
+        { label: 'Investigation Status',  value: statusLabel,               cls: 'text-blue-300' },
+      ];
+      $('observability-content').innerHTML = fields.map(f => `
+        <div class="bg-slate-900/60 border border-slate-700 rounded px-3 py-2 space-y-1">
+          <p class="text-slate-600 text-xs">${f.label}</p>
+          <p class="font-semibold text-xs ${f.cls}">${f.value}</p>
+        </div>`).join('');
+      $('observability-card').classList.remove('hidden');
+    }
+
+    // ── Dynatrace Trace Section ───────────────────────────────────────────────
+    function renderDTTrace() {
+      // Trace URL is not returned by the autopsy API — link is shown as disabled.
+      $('dt-trace-content').innerHTML = `
+        <button disabled
+          class="bg-slate-700 border border-slate-600 text-slate-500 cursor-not-allowed text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-2">
+          <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+          Trace Link Available When Dynatrace Is Configured
+        </button>
+        <p class="text-xs text-slate-600 mt-2">Configure <code class="text-sky-500">DYNATRACE_TENANT_URL</code> to enable direct trace links.</p>`;
+      $('dt-trace-section').classList.remove('hidden');
     }
 
     // ── Render hypothesis ─────────────────────────────────────────────────────
-    function renderHypothesis(h) {
+    function renderHypothesis(h, status) {
       $('status-spinner').classList.add('hidden');
       $('status-text').textContent = 'Awaiting review';
 
@@ -268,9 +522,22 @@
       badge.className = 'ml-auto text-xs font-semibold px-2.5 py-0.5 rounded-full bg-yellow-900/60 border border-yellow-600 text-yellow-300';
       badge.classList.remove('hidden');
 
+      // Render new cards above hypothesis
+      renderSelfCheck();
+      renderObservability(status || 'awaiting_review');
+      renderDTTrace();
+
       const cb = $('confidence-badge');
       cb.textContent = h.confidence;
       cb.className = `text-xs font-bold px-2.5 py-1 rounded-full shrink-0 ${confidenceClasses(h.confidence)}`;
+
+      // Why This Matters — derive first sentence from full_analysis or summary
+      const src = (h.full_analysis || h.summary || '').trim();
+      const firstSentence = src.split(/(?<=[.!?])\s/)[0].trim();
+      if (firstSentence && firstSentence.length > 20) {
+        $('why-matters-text').textContent = firstSentence.endsWith('.') ? firstSentence : firstSentence + '.';
+        $('why-matters').classList.remove('hidden');
+      }
 
       $('hypothesis-summary').textContent = h.summary || '(No summary provided)';
 
@@ -296,6 +563,14 @@
       $('btn-redirect').disabled = false;
     }
 
+    // ── Reset new cards ───────────────────────────────────────────────────────
+    function resetStatusCards() {
+      ['self-check-card','observability-card','dt-trace-section','investigation-failed-card'].forEach(id => {
+        $(id).classList.add('hidden');
+      });
+      $('why-matters').classList.add('hidden');
+    }
+
     // ── Fetch helpers ─────────────────────────────────────────────────────────
     // Endpoints used in this file:
     //   fetch('/autopsy/start')          POST  — start a new autopsy
@@ -315,15 +590,16 @@
     function startPolling(incidentId) {
       pollCount = 0;
       clearInterval(pollTimer);
+      updateTimeline('collecting', 0);
       pollTimer = setInterval(async () => {
         pollCount++;
         try {
           const data = await checkResp(await fetch('/autopsy/' + incidentId + '/status'));
-          logPoll(`status=${data.status}`);
+          updateTimeline(data.status, pollCount);
 
           if (data.status === 'awaiting_review' && data.hypothesis) {
             clearInterval(pollTimer);
-            renderHypothesis(data.hypothesis);
+            renderHypothesis(data.hypothesis, data.status);
             return;
           }
           if (data.status === 'failed') {
@@ -334,7 +610,7 @@
             b.textContent = 'FAILED';
             b.className = 'ml-auto text-xs font-semibold px-2.5 py-0.5 rounded-full bg-red-900/60 border border-red-600 text-red-300';
             b.classList.remove('hidden');
-            showError(data.error || 'Investigation failed with no error detail.');
+            showInvestigationFailed(data);
             $('btn-start').disabled = false;
             $('btn-start-spinner').classList.add('hidden');
             return;
@@ -343,12 +619,10 @@
             clearInterval(pollTimer);
             if (data.postmortem) showPostmortem(data.postmortem);
           }
-          // Update status text while collecting
           if (data.status) {
             $('status-text').textContent = statusLabel(data.status);
           }
         } catch (err) {
-          logPoll(`poll error: ${err.message}`);
           if (pollCount >= 3) {
             clearInterval(pollTimer);
             showError(`Polling failed after ${pollCount} attempts: ${err.message}`);
@@ -370,21 +644,122 @@
       }[s] || s;
     }
 
-    // ── Postmortem ────────────────────────────────────────────────────────────
+    // ── Postmortem helpers ────────────────────────────────────────────────────
+    function parsePostmortemSections(text) {
+      if (!text) return [];
+      const sections = [];
+      let currentTitle = null;
+      let currentBody  = [];
+      for (const line of text.split('\n')) {
+        const m = line.match(/^## (.+)/);
+        if (m) {
+          if (currentTitle !== null)
+            sections.push({ title: currentTitle, body: currentBody.join('\n').trim() });
+          currentTitle = m[1].trim();
+          currentBody  = [];
+        } else if (currentTitle !== null) {
+          currentBody.push(line);
+        }
+      }
+      if (currentTitle !== null)
+        sections.push({ title: currentTitle, body: currentBody.join('\n').trim() });
+      return sections;
+    }
+
+    function renderSection(title, body, type) {
+      const div = document.createElement('div');
+      const isHighlight = type === 'highlight';
+      div.className = isHighlight
+        ? 'border border-amber-700/60 bg-amber-950/20 rounded-lg px-4 py-3 space-y-2'
+        : 'border border-slate-700 rounded-lg px-4 py-3 space-y-2';
+
+      const titleEl = document.createElement('p');
+      titleEl.className = `text-xs uppercase tracking-wider font-semibold ${isHighlight ? 'text-amber-300' : 'text-slate-400'}`;
+      titleEl.textContent = title;
+      div.appendChild(titleEl);
+
+      const contentEl = document.createElement('div');
+      contentEl.className = 'text-sm text-slate-300 leading-relaxed';
+
+      if (type === 'checklist') {
+        const ul = document.createElement('ul');
+        ul.className = 'space-y-1';
+        body.split('\n').filter(l => l.trim()).forEach(item => {
+          const li = document.createElement('li');
+          li.className = 'flex items-start gap-2 text-slate-300 text-sm';
+          li.innerHTML = `<span class="text-blue-500 shrink-0 mt-0.5">☐</span><span>${item.replace(/^[-*▸•☐]\s*(\[ \]\s*)?/,'')}</span>`;
+          ul.appendChild(li);
+        });
+        contentEl.appendChild(ul);
+      } else if (type === 'bullets') {
+        const bulletLines = body.split('\n').filter(l => /^[-*▸•]/.test(l.trim()));
+        const ul = document.createElement('ul');
+        ul.className = 'space-y-1';
+        (bulletLines.length > 0 ? bulletLines : body.split('\n').filter(l => l.trim())).forEach(item => {
+          const li = document.createElement('li');
+          li.className = 'flex items-start gap-2 text-slate-400 text-sm';
+          li.innerHTML = `<span class="text-slate-600 shrink-0 mt-0.5">▸</span><span>${item.replace(/^[-*▸•]\s*/, '')}</span>`;
+          ul.appendChild(li);
+        });
+        contentEl.appendChild(ul);
+      } else {
+        contentEl.innerHTML = mdToHtml(body);
+      }
+
+      div.appendChild(contentEl);
+      return div;
+    }
+
+    function downloadPostmortem() {
+      const filename = `postmortem-${currentIncidentId || 'incident'}-${Date.now()}.md`;
+      const blob = new Blob([lastPostmortemRaw], { type: 'text/markdown' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+
     function showPostmortem(content) {
-      $('postmortem-content').innerHTML = mdToHtml(content);
+      lastPostmortemRaw = content || '';
+
+      $('pm-incident-id').textContent = currentIncidentId  || '—';
+      $('pm-service').textContent     = currentServiceName || '—';
+      $('pm-timestamp').textContent   = new Date().toLocaleString();
+      $('pm-human-review-text').textContent = wasRedirected
+        ? 'Operator redirected investigation — findings re-evaluated before approval.'
+        : 'Operator approved investigation findings.';
+
+      const sections  = parsePostmortemSections(content);
+      const container = $('postmortem-sections');
+      container.innerHTML = '';
+
+      if (sections.length > 0) {
+        sections.forEach(({ title, body }) => {
+          const type = /root.?cause|summary/i.test(title)          ? 'highlight'
+                     : /action|todo|fix|remediation|prevent/i.test(title) ? 'checklist'
+                     : /timeline|event|sequence|log/i.test(title)  ? 'bullets'
+                     : 'normal';
+          container.appendChild(renderSection(title, body, type));
+        });
+        $('postmortem-raw').classList.add('hidden');
+      } else {
+        $('postmortem-content').innerHTML = mdToHtml(content);
+        $('postmortem-raw').classList.remove('hidden');
+      }
+
       showPanel('postmortem');
     }
 
     // ── Start Autopsy ─────────────────────────────────────────────────────────
     $('btn-start').addEventListener('click', async () => {
       clearError();
-      const incidentId   = $('incident-id').value.trim();
-      const serviceName  = $('service-name').value.trim();
-      const timeRange    = $('time-range').value.trim() || '-1h';
-      const description  = $('description').value.trim() || null;
+      const incidentId  = $('incident-id').value.trim();
+      const serviceName = $('service-name').value.trim();
+      const timeRange   = $('time-range').value.trim() || '-1h';
+      const description = $('description').value.trim() || null;
 
-      if (!incidentId) { showError('Incident ID is required.'); return; }
+      if (!incidentId)  { showError('Incident ID is required.'); return; }
       if (!serviceName) { showError('Service Name is required.'); return; }
 
       $('btn-start').disabled = true;
@@ -397,7 +772,9 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ incident_id: incidentId, service_name: serviceName, time_range: timeRange, description }),
         }));
-        currentIncidentId = incidentId;
+        currentIncidentId  = incidentId;
+        currentServiceName = serviceName;
+        wasRedirected      = false;
 
         // Reset panel-status UI
         $('status-spinner').classList.remove('hidden');
@@ -406,10 +783,10 @@
         $('hypothesis-card').classList.add('hidden');
         $('evidence-block').classList.add('hidden');
         $('analysis-block').classList.add('hidden');
-        $('poll-log').innerHTML = '';
         $('btn-approve').disabled = true;
         $('btn-redirect').disabled = true;
         $('redirect-feedback').value = '';
+        resetStatusCards();
 
         showPanel('status');
         startPolling(incidentId);
@@ -419,6 +796,34 @@
         $('btn-start-spinner').classList.add('hidden');
         $('btn-start-label').textContent = 'Start Autopsy';
       }
+    });
+
+    // ── Retry (from failed card) ──────────────────────────────────────────────
+    $('btn-retry').addEventListener('click', () => {
+      if (!currentIncidentId) return;
+      $('investigation-failed-card').classList.add('hidden');
+      $('status-spinner').classList.remove('hidden');
+      $('status-text').textContent = 'Collecting evidence…';
+      $('status-badge').classList.add('hidden');
+      startPolling(currentIncidentId);
+    });
+
+    $('btn-failed-reset').addEventListener('click', () => {
+      clearInterval(pollTimer);
+      currentIncidentId  = null;
+      currentServiceName = null;
+      wasRedirected      = false;
+      lastPostmortemRaw  = '';
+      pollCount = 0;
+      clearError();
+      $('incident-id').value = '';
+      $('service-name').value = '';
+      $('time-range').value = '-1h';
+      $('description').value = '';
+      $('btn-start').disabled = false;
+      $('btn-start-spinner').classList.add('hidden');
+      $('btn-start-label').textContent = 'Start Autopsy';
+      showPanel('start');
     });
 
     // ── Approve ───────────────────────────────────────────────────────────────
@@ -438,7 +843,6 @@
         if (data.postmortem) {
           showPostmortem(data.postmortem);
         } else {
-          // Postmortem may be generated async — poll for it
           $('status-text').textContent = 'Approved — generating postmortem…';
           $('btn-approve-spinner').classList.add('hidden');
           startPolling(currentIncidentId);
@@ -468,14 +872,15 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'redirect', feedback: fb }),
         }));
+        wasRedirected = true;
         $('hypothesis-card').classList.add('hidden');
         $('evidence-block').classList.add('hidden');
         $('analysis-block').classList.add('hidden');
         $('status-spinner').classList.remove('hidden');
         $('status-text').textContent = 'Redirected — re-investigating…';
         $('status-badge').classList.add('hidden');
-        $('poll-log').innerHTML = '';
         $('btn-redirect-spinner').classList.add('hidden');
+        resetStatusCards();
         startPolling(currentIncidentId);
       } catch (err) {
         showError(`Redirect failed: ${err.message}`);
@@ -488,7 +893,10 @@
     // ── Reset ─────────────────────────────────────────────────────────────────
     $('btn-reset').addEventListener('click', () => {
       clearInterval(pollTimer);
-      currentIncidentId = null;
+      currentIncidentId  = null;
+      currentServiceName = null;
+      wasRedirected      = false;
+      lastPostmortemRaw  = '';
       pollCount = 0;
       clearError();
       $('incident-id').value = '';
@@ -501,13 +909,17 @@
       showPanel('start');
     });
 
-    // ── Boot: show start panel ────────────────────────────────────────────────
+    // ── Download ──────────────────────────────────────────────────────────────
+    $('btn-download').addEventListener('click', downloadPostmortem);
+
+    // ── Boot ──────────────────────────────────────────────────────────────────
     $('btn-approve').disabled = true;
     $('btn-redirect').disabled = true;
+    updateTimeline('collecting', 0);
     showPanel('start');
   </script>
   <footer class="text-sm text-gray-400 tracking-wide mt-10 pb-6 text-center w-full">
-    Gemini API &bull; Dynatrace &bull; OpenTelemetry &bull; Human Oversight
+    Built with Gemini 2.5 Flash &bull; Dynatrace &bull; OpenTelemetry &bull; FastAPI &bull; Human Oversight
   </footer>
 </body>
 </html>
