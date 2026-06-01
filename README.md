@@ -253,3 +253,7 @@ curl -X POST http://localhost:8000/demo/incident   # run 2–3 times
 | LLM Token Cost Over Time | `llm.cost.usd` sum by 5 min |
 | Phase Duration Breakdown | avg `duration` by `agent.phase.*` |
 | Recent Incidents | latest 20 root spans with cost + tokens |
+
+---
+
+**ReliabilityAgent**: An AI SRE that observes its own reasoning. Built with Gemini, Dynatrace, and OpenTelemetry for the Google Cloud Rapid Agent Hackathon 2026.
