@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Incident Autopsy Agent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            slate: { 950: '#0f172a' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #0f172a; }
+    .spinner {
+      width: 1.25rem; height: 1.25rem;
+      border: 2px solid #334155;
+      border-top-color: #60a5fa;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 font-mono p-6">
+
+  <div class="max-w-3xl mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="border-b border-slate-700 pb-4">
+      <h1 class="text-2xl font-bold text-white tracking-tight">Incident Autopsy Agent</h1>
+      <p class="text-slate-400 text-sm mt-1">AI-driven root cause analysis with human-in-the-loop review</p>
+    </div>
+
+    <!-- Error Banner -->
+    <div id="error-banner" class="hidden bg-red-900/60 border border-red-500 text-red-200 rounded-lg px-4 py-3 text-sm fade-in">
+      <span class="font-bold">Error: </span><span id="error-text"></span>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────
+         PANEL 1 — Start Form
+    ───────────────────────────────────────────────────── -->
+    <div id="panel-start" class="bg-slate-800 border border-slate-700 rounded-xl p-6 space-y-4 fade-in">
+      <h2 class="text-lg font-semibold text-slate-100">Start Autopsy</h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Incident ID <span class="text-red-400">*</span></label>
+          <input id="incident-id" type="text" placeholder="INC-2024-001"
+            class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Service Name <span class="text-red-400">*</span></label>
+          <input id="service-name" type="text" placeholder="api-gateway"
+            class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Time Range</label>
+          <input id="time-range" type="text" value="-1h"
+            class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Description</label>
+          <input id="description" type="text" placeholder="Optional alert context"
+            class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+        </div>
+      </div>
+
+      <button id="btn-start"
+        class="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-semibold px-6 py-2.5 rounded-lg text-sm transition-colors flex items-center gap-2">
+        <span id="btn-start-spinner" class="spinner hidden"></span>
+        <span id="btn-start-label">Start Autopsy</span>
+      </button>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────
+         PANEL 2 — Status & Hypothesis
+    ───────────────────────────────────────────────────── -->
+    <div id="panel-status" class="hidden bg-slate-800 border border-slate-700 rounded-xl p-6 space-y-5 fade-in">
+
+      <!-- Status row -->
+      <div class="flex items-center gap-3">
+        <span id="status-spinner" class="spinner"></span>
+        <span id="status-text" class="text-slate-300 text-sm">Collecting evidence…</span>
+        <span id="status-badge" class="hidden ml-auto text-xs font-semibold px-2.5 py-0.5 rounded-full"></span>
+      </div>
+
+      <!-- Polling log -->
+      <div id="poll-log" class="text-xs text-slate-500 space-y-0.5"></div>
+
+      <!-- Hypothesis card (hidden until data arrives) -->
+      <div id="hypothesis-card" class="hidden space-y-4 border-t border-slate-700 pt-4 fade-in">
+
+        <div class="flex items-start justify-between gap-3">
+          <h3 class="text-slate-100 font-semibold text-base">Hypothesis</h3>
+          <span id="confidence-badge" class="text-xs font-bold px-2.5 py-1 rounded-full shrink-0"></span>
+        </div>
+
+        <p id="hypothesis-summary" class="text-slate-300 text-sm leading-relaxed"></p>
+
+        <div id="evidence-block" class="hidden">
+          <p class="text-xs text-slate-400 uppercase tracking-wider mb-2">Evidence</p>
+          <ul id="evidence-list" class="space-y-1"></ul>
+        </div>
+
+        <div id="analysis-block" class="hidden">
+          <p class="text-xs text-slate-400 uppercase tracking-wider mb-2">Full Analysis</p>
+          <p id="analysis-text" class="text-slate-400 text-sm leading-relaxed bg-slate-900 rounded-lg p-3"></p>
+        </div>
+
+        <!-- Feedback section -->
+        <div class="border-t border-slate-700 pt-4 space-y-3">
+          <p class="text-xs text-slate-400 uppercase tracking-wider">Review &amp; Feedback</p>
+
+          <div id="feedback-redirect-box" class="space-y-2">
+            <label class="block text-xs text-slate-400">Redirect feedback (required if redirecting)</label>
+            <textarea id="redirect-feedback" rows="2" placeholder="Describe what the agent missed or should investigate next…"
+              class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400 resize-none"></textarea>
+          </div>
+
+          <div class="flex flex-wrap gap-3">
+            <button id="btn-approve"
+              class="bg-emerald-700 hover:bg-emerald-600 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
+              <span id="btn-approve-spinner" class="spinner hidden"></span>
+              <span>Approve</span>
+            </button>
+            <button id="btn-redirect"
+              class="bg-orange-700 hover:bg-orange-600 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
+              <span id="btn-redirect-spinner" class="spinner hidden"></span>
+              <span>Redirect</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────
+         PANEL 3 — Postmortem Report
+    ───────────────────────────────────────────────────── -->
+    <div id="panel-postmortem" class="hidden bg-slate-800 border border-slate-700 rounded-xl p-6 space-y-4 fade-in">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-slate-100">Postmortem Report</h2>
+        <span class="text-xs text-emerald-400 font-semibold bg-emerald-900/40 border border-emerald-700 px-2.5 py-0.5 rounded-full">Approved</span>
+      </div>
+      <div id="postmortem-content"
+        class="prose-sm text-slate-300 bg-slate-900 rounded-lg p-4 leading-relaxed space-y-3 text-sm overflow-auto max-h-[60vh]">
+      </div>
+      <button id="btn-reset"
+        class="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors">
+        Start New Autopsy
+      </button>
+    </div>
+
+  </div><!-- /max-w -->
+
+  <script>
+    // ── State ────────────────────────────────────────────────────────────────
+    let currentIncidentId = null;
+    let pollTimer = null;
+    let pollCount = 0;
+
+    // ── DOM refs ─────────────────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+
+    const panelStart      = $('panel-start');
+    const panelStatus     = $('panel-status');
+    const panelPostmortem = $('panel-postmortem');
+    const errorBanner     = $('error-banner');
+    const errorText       = $('error-text');
+
+    // ── Error display ─────────────────────────────────────────────────────────
+    function showError(msg) {
+      errorText.textContent = msg;
+      errorBanner.classList.remove('hidden');
+      errorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    function clearError() {
+      errorBanner.classList.add('hidden');
+      errorText.textContent = '';
+    }
+
+    // ── Panel visibility ──────────────────────────────────────────────────────
+    function showPanel(name) {
+      panelStart.classList.add('hidden');
+      panelStatus.classList.add('hidden');
+      panelPostmortem.classList.add('hidden');
+      if (name === 'start')      { panelStart.classList.remove('hidden'); }
+      if (name === 'status')     { panelStatus.classList.remove('hidden'); }
+      if (name === 'postmortem') { panelPostmortem.classList.remove('hidden'); }
+    }
+
+    // ── Confidence badge styling ──────────────────────────────────────────────
+    function confidenceClasses(level) {
+      if (level === 'HIGH')   return 'bg-emerald-900/60 border border-emerald-600 text-emerald-300';
+      if (level === 'MEDIUM') return 'bg-yellow-900/60 border border-yellow-600 text-yellow-300';
+      return 'bg-red-900/60 border border-red-600 text-red-300';
+    }
+
+    // ── Simple markdown → HTML ────────────────────────────────────────────────
+    function mdToHtml(text) {
+      if (!text) return '';
+      const lines = text.split('\n');
+      const out = [];
+      let inList = false;
+      for (let raw of lines) {
+        let line = raw;
+        // Bold
+        line = line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-100">$1</strong>');
+        // Inline code
+        line = line.replace(/`([^`]+)`/g, '<code class="bg-slate-700 px-1 rounded text-sky-300 text-xs">$1</code>');
+        // H3
+        if (/^### (.+)/.test(line)) {
+          if (inList) { out.push('</ul>'); inList = false; }
+          out.push(`<h3 class="text-slate-100 font-semibold text-sm mt-4 mb-1">${line.replace(/^### /, '')}</h3>`);
+          continue;
+        }
+        // H2
+        if (/^## (.+)/.test(line)) {
+          if (inList) { out.push('</ul>'); inList = false; }
+          out.push(`<h2 class="text-slate-100 font-bold text-base mt-5 mb-2 border-b border-slate-700 pb-1">${line.replace(/^## /, '')}</h2>`);
+          continue;
+        }
+        // H1
+        if (/^# (.+)/.test(line)) {
+          if (inList) { out.push('</ul>'); inList = false; }
+          out.push(`<h1 class="text-white font-bold text-lg mt-4 mb-2">${line.replace(/^# /, '')}</h1>`);
+          continue;
+        }
+        // List items
+        if (/^[-*] (.+)/.test(line)) {
+          if (!inList) { out.push('<ul class="list-disc list-inside space-y-1 text-slate-400">'); inList = true; }
+          out.push(`<li>${line.replace(/^[-*] /, '')}</li>`);
+          continue;
+        }
+        // Close list on blank or non-list line
+        if (inList && line.trim() !== '') { out.push('</ul>'); inList = false; }
+        // Blank line
+        if (line.trim() === '') { out.push('<div class="my-2"></div>'); continue; }
+        out.push(`<p>${line}</p>`);
+      }
+      if (inList) out.push('</ul>');
+      return out.join('\n');
+    }
+
+    // ── Poll log ──────────────────────────────────────────────────────────────
+    function logPoll(msg) {
+      const el = document.createElement('div');
+      el.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      $('poll-log').appendChild(el);
+    }
+
+    // ── Render hypothesis ─────────────────────────────────────────────────────
+    function renderHypothesis(h) {
+      $('status-spinner').classList.add('hidden');
+      $('status-text').textContent = 'Awaiting review';
+
+      const badge = $('status-badge');
+      badge.textContent = 'AWAITING REVIEW';
+      badge.className = 'ml-auto text-xs font-semibold px-2.5 py-0.5 rounded-full bg-yellow-900/60 border border-yellow-600 text-yellow-300';
+      badge.classList.remove('hidden');
+
+      const cb = $('confidence-badge');
+      cb.textContent = h.confidence;
+      cb.className = `text-xs font-bold px-2.5 py-1 rounded-full shrink-0 ${confidenceClasses(h.confidence)}`;
+
+      $('hypothesis-summary').textContent = h.summary || '(No summary provided)';
+
+      if (Array.isArray(h.evidence) && h.evidence.length > 0) {
+        const list = $('evidence-list');
+        list.innerHTML = '';
+        h.evidence.forEach(e => {
+          const li = document.createElement('li');
+          li.className = 'flex items-start gap-2 text-sm text-slate-400';
+          li.innerHTML = `<span class="text-emerald-500 mt-0.5 shrink-0">▸</span><span>${e}</span>`;
+          list.appendChild(li);
+        });
+        $('evidence-block').classList.remove('hidden');
+      }
+
+      if (h.full_analysis) {
+        $('analysis-text').textContent = h.full_analysis;
+        $('analysis-block').classList.remove('hidden');
+      }
+
+      $('hypothesis-card').classList.remove('hidden');
+      $('btn-approve').disabled = false;
+      $('btn-redirect').disabled = false;
+    }
+
+    // ── Fetch helpers ─────────────────────────────────────────────────────────
+    // Endpoints used in this file:
+    //   fetch('/autopsy/start')          POST  — start a new autopsy
+    //   fetch('/autopsy/<id>/status')    GET   — poll investigation status
+    //   fetch('/autopsy/<id>/feedback')  POST  — submit human review feedback
+
+    async function checkResp(resp) {
+      if (!resp.ok) {
+        let detail = `HTTP ${resp.status}`;
+        try { const j = await resp.json(); detail += `: ${j.detail || JSON.stringify(j)}`; } catch (_) {}
+        throw new Error(detail);
+      }
+      return resp.json();
+    }
+
+    // ── Poll status ───────────────────────────────────────────────────────────
+    function startPolling(incidentId) {
+      pollCount = 0;
+      clearInterval(pollTimer);
+      pollTimer = setInterval(async () => {
+        pollCount++;
+        try {
+          const data = await checkResp(await fetch('/autopsy/' + incidentId + '/status'));
+          logPoll(`status=${data.status}`);
+
+          if (data.status === 'awaiting_review' && data.hypothesis) {
+            clearInterval(pollTimer);
+            renderHypothesis(data.hypothesis);
+            return;
+          }
+          if (data.status === 'failed') {
+            clearInterval(pollTimer);
+            $('status-spinner').classList.add('hidden');
+            $('status-text').textContent = 'Investigation failed';
+            const b = $('status-badge');
+            b.textContent = 'FAILED';
+            b.className = 'ml-auto text-xs font-semibold px-2.5 py-0.5 rounded-full bg-red-900/60 border border-red-600 text-red-300';
+            b.classList.remove('hidden');
+            showError(data.error || 'Investigation failed with no error detail.');
+            $('btn-start').disabled = false;
+            $('btn-start-spinner').classList.add('hidden');
+            return;
+          }
+          if (data.status === 'completed') {
+            clearInterval(pollTimer);
+            if (data.postmortem) showPostmortem(data.postmortem);
+          }
+          // Update status text while collecting
+          if (data.status) {
+            $('status-text').textContent = statusLabel(data.status);
+          }
+        } catch (err) {
+          logPoll(`poll error: ${err.message}`);
+          if (pollCount >= 3) {
+            clearInterval(pollTimer);
+            showError(`Polling failed after ${pollCount} attempts: ${err.message}`);
+            $('btn-start').disabled = false;
+            $('btn-start-spinner').classList.add('hidden');
+          }
+        }
+      }, 3000);
+    }
+
+    function statusLabel(s) {
+      return {
+        collecting: 'Collecting evidence…',
+        awaiting_review: 'Awaiting review',
+        approved: 'Approved — generating postmortem…',
+        redirected: 'Redirected — re-investigating…',
+        completed: 'Completed',
+        failed: 'Failed',
+      }[s] || s;
+    }
+
+    // ── Postmortem ────────────────────────────────────────────────────────────
+    function showPostmortem(content) {
+      $('postmortem-content').innerHTML = mdToHtml(content);
+      showPanel('postmortem');
+    }
+
+    // ── Start Autopsy ─────────────────────────────────────────────────────────
+    $('btn-start').addEventListener('click', async () => {
+      clearError();
+      const incidentId   = $('incident-id').value.trim();
+      const serviceName  = $('service-name').value.trim();
+      const timeRange    = $('time-range').value.trim() || '-1h';
+      const description  = $('description').value.trim() || null;
+
+      if (!incidentId) { showError('Incident ID is required.'); return; }
+      if (!serviceName) { showError('Service Name is required.'); return; }
+
+      $('btn-start').disabled = true;
+      $('btn-start-spinner').classList.remove('hidden');
+      $('btn-start-label').textContent = 'Starting…';
+
+      try {
+        await checkResp(await fetch('/autopsy/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ incident_id: incidentId, service_name: serviceName, time_range: timeRange, description }),
+        }));
+        currentIncidentId = incidentId;
+
+        // Reset panel-status UI
+        $('status-spinner').classList.remove('hidden');
+        $('status-text').textContent = 'Collecting evidence…';
+        $('status-badge').classList.add('hidden');
+        $('hypothesis-card').classList.add('hidden');
+        $('evidence-block').classList.add('hidden');
+        $('analysis-block').classList.add('hidden');
+        $('poll-log').innerHTML = '';
+        $('btn-approve').disabled = true;
+        $('btn-redirect').disabled = true;
+        $('redirect-feedback').value = '';
+
+        showPanel('status');
+        startPolling(incidentId);
+      } catch (err) {
+        showError(`Failed to start autopsy: ${err.message}`);
+        $('btn-start').disabled = false;
+        $('btn-start-spinner').classList.add('hidden');
+        $('btn-start-label').textContent = 'Start Autopsy';
+      }
+    });
+
+    // ── Approve ───────────────────────────────────────────────────────────────
+    $('btn-approve').addEventListener('click', async () => {
+      if (!currentIncidentId) return;
+      clearError();
+      $('btn-approve').disabled = true;
+      $('btn-redirect').disabled = true;
+      $('btn-approve-spinner').classList.remove('hidden');
+
+      try {
+        const data = await checkResp(await fetch('/autopsy/' + currentIncidentId + '/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'approve', feedback: 'Approved by operator.' }),
+        }));
+        if (data.postmortem) {
+          showPostmortem(data.postmortem);
+        } else {
+          // Postmortem may be generated async — poll for it
+          $('status-text').textContent = 'Approved — generating postmortem…';
+          $('btn-approve-spinner').classList.add('hidden');
+          startPolling(currentIncidentId);
+        }
+      } catch (err) {
+        showError(`Approve failed: ${err.message}`);
+        $('btn-approve').disabled = false;
+        $('btn-redirect').disabled = false;
+        $('btn-approve-spinner').classList.add('hidden');
+      }
+    });
+
+    // ── Redirect ──────────────────────────────────────────────────────────────
+    $('btn-redirect').addEventListener('click', async () => {
+      if (!currentIncidentId) return;
+      clearError();
+      const fb = $('redirect-feedback').value.trim();
+      if (!fb) { showError('Redirect feedback is required before redirecting.'); return; }
+
+      $('btn-approve').disabled = true;
+      $('btn-redirect').disabled = true;
+      $('btn-redirect-spinner').classList.remove('hidden');
+
+      try {
+        await checkResp(await fetch('/autopsy/' + currentIncidentId + '/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'redirect', feedback: fb }),
+        }));
+        $('hypothesis-card').classList.add('hidden');
+        $('evidence-block').classList.add('hidden');
+        $('analysis-block').classList.add('hidden');
+        $('status-spinner').classList.remove('hidden');
+        $('status-text').textContent = 'Redirected — re-investigating…';
+        $('status-badge').classList.add('hidden');
+        $('poll-log').innerHTML = '';
+        $('btn-redirect-spinner').classList.add('hidden');
+        startPolling(currentIncidentId);
+      } catch (err) {
+        showError(`Redirect failed: ${err.message}`);
+        $('btn-approve').disabled = false;
+        $('btn-redirect').disabled = false;
+        $('btn-redirect-spinner').classList.add('hidden');
+      }
+    });
+
+    // ── Reset ─────────────────────────────────────────────────────────────────
+    $('btn-reset').addEventListener('click', () => {
+      clearInterval(pollTimer);
+      currentIncidentId = null;
+      pollCount = 0;
+      clearError();
+      $('incident-id').value = '';
+      $('service-name').value = '';
+      $('time-range').value = '-1h';
+      $('description').value = '';
+      $('btn-start').disabled = false;
+      $('btn-start-spinner').classList.add('hidden');
+      $('btn-start-label').textContent = 'Start Autopsy';
+      showPanel('start');
+    });
+
+    // ── Boot: show start panel ────────────────────────────────────────────────
+    $('btn-approve').disabled = true;
+    $('btn-redirect').disabled = true;
+    showPanel('start');
+  </script>
+</body>
+</html>

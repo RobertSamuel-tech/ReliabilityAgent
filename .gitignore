@@ -1,4 +1,5 @@
 venv/
+.venv*/
 .env
 __pycache__/
 *.pyc
@@ -13,6 +14,7 @@ build/
 *.tfstate.*
 .terraform/
 otelcol-contrib
+output/
 *.json
 !config/dynatrace_dashboards.json
 !infra/*.tf
