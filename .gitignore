@@ -1,20 +1,32 @@
-venv/
-.venv*/
-.env
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.egg-info/
 dist/
 build/
-.DS_Store
-.idea/
-.vscode/
+
+# Environments
+.env
+.venv/
+.venv*/
+venv/
+
+# Runtime output
+output/
+
+# Infrastructure
 *.tfstate
 *.tfstate.*
 .terraform/
 otelcol-contrib
-output/
+
+# JSON (keep dashboard and infra)
 *.json
 !config/dynatrace_dashboards.json
 !infra/*.tf
+
+# Editors
+.DS_Store
+.idea/
+.vscode/

@@ -62,7 +62,6 @@ class ReliabilityAgent:
                 out = getattr(um, "candidates_token_count", None)
                 if inp is not None and out is not None and (inp > 0 or out > 0):
                     return {"input": int(inp), "output": int(out)}
-                # OpenAI-normalised format (LiteLLM adapter)
                 inp = getattr(um, "input_tokens", None) or getattr(um, "prompt_tokens", None)
                 out = getattr(um, "output_tokens", None) or getattr(um, "completion_tokens", None)
                 if inp is not None and out is not None and (inp > 0 or out > 0):
