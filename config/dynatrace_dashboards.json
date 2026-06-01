@@ -23,15 +23,12 @@
     },
     "2": {
       "type": "dql",
-      "title": "Avg Cost per Incident (USD)",
-      "query": "fetch spans\n| filter span.name == \"agent.incident.handle\"\n| filter isNotNull(span.attributes[\"llm.cost.usd\"])\n| summarize avgCost = avg(toDouble(span.attributes[\"llm.cost.usd\"]))\n| fields avgCost",
-      "visualization": "singleValue",
+      "title": "Self-Check Verdicts",
+      "query": "fetch spans\n| filter span.name == \"agent.phase.self_check\" or span.name == \"agent.phase.reinvestigate\"\n| summarize count(), by: { Verdict = if(span.name == \"agent.phase.reinvestigate\", \"Reinvestigated\", span.attributes[\"self_check.verdict\"]) }",
+      "visualization": "barChart",
       "visualizationSettings": {
-        "singleValue": {
-          "showLabel": true,
-          "label": "Avg USD",
-          "autoscale": true,
-          "alignment": "center"
+        "barChart": {
+          "legend": { "hidden": false }
         }
       }
     },

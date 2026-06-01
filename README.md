@@ -5,7 +5,7 @@
 Gemini investigates production incidents — queries live telemetry, executes runbooks, synthesizes root cause — then verifies its own thoroughness by reading the tool-call record it built during the run. Every phase, tool call, and self-check verdict is an OTel span in Dynatrace Grail. If the self-check fails, the agent reinvestigates. All of it lands as a single trace waterfall.
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?logo=python&logoColor=white)](https://python.org)
-[![Gemini](https://img.shields.io/badge/Gemini-2.5%20Flash-4285F4?logo=googlegemini&logoColor=white)](https://ai.google.dev)
+[![Gemini](https://img.shields.io/badge/Gemini-3.1%20Flash%20Lite-4285F4?logo=googlegemini&logoColor=white)](https://ai.google.dev)
 [![Google ADK](https://img.shields.io/badge/Google%20ADK-2.1.0-4285F4?logo=googlecloud&logoColor=white)](https://google.github.io/adk-docs/)
 [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-OTLP%20HTTP-7b52ab?logo=opentelemetry&logoColor=white)](https://opentelemetry.io)
 [![Dynatrace](https://img.shields.io/badge/Dynatrace-Grail%20DQL-00a6c8)](https://www.dynatrace.com)
@@ -59,7 +59,7 @@ Most AI agents are black boxes at runtime. ReliabilityAgent treats agent reasoni
 │                                                                     │
 │  ReliabilityAgent                                                   │
 │    ├── Google ADK Runner + InMemorySessionService                   │
-│    ├── Gemini (gemini-2.5-flash, configurable via GEMINI_MODEL)     │
+│    ├── Gemini (gemini-3.1-flash-lite, configurable via GEMINI_MODEL)  │
 │    ├── TRIAGE_PROMPT + INCIDENT_PROMPT_TEMPLATE                     │
 │    └── Retry loop: max_retries = 1 (one reinvestigation per run)    │
 │                                                                     │

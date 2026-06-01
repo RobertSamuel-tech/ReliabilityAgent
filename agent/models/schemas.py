@@ -39,6 +39,7 @@ class AutopsyState(BaseModel):
         "failed",
     ] = "collecting"
     hypothesis: Optional[Hypothesis] = None
+    trace_id: Optional[str] = None
     evidence: Dict[str, Any] = {}
     human_feedback: Optional[HumanFeedback] = None
     postmortem: Optional[str] = None
