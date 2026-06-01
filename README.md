@@ -94,9 +94,9 @@ Most AI agents are black boxes at runtime. ReliabilityAgent treats agent reasoni
 ┌─────────────────────────────────────────────────────────────────────┐
 │  OBSERVABILITY  (observability/)                                    │
 │                                                                     │
-│  TracerProvider  → OTLPSpanExporter   → /api/v2/otlp/v1/traces     │
-│  MeterProvider   → OTLPMetricExporter → /api/v2/otlp/v1/metrics    │
-│  LoggerProvider  → OTLPLogExporter    → /api/v2/otlp/v1/logs       │
+│  TracerProvider  → OTLPSpanExporter   → /api/v2/otlp/v1/traces      │
+│  MeterProvider   → OTLPMetricExporter → /api/v2/otlp/v1/metrics     │
+│  LoggerProvider  → OTLPLogExporter    → /api/v2/otlp/v1/logs        │ 
 │                                                                     │
 │  Metrics emitted:                                                   │
 │    agent.tokens.total      (counter, labelled by model)             │
