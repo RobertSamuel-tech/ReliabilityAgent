@@ -78,7 +78,7 @@ Most AI agents are black boxes at runtime. ReliabilityAgent treats agent reasoni
 │  │   Emits agent.tool.runbook.execute OTel span               │     │
 │  │   Records tool call in registry                            │     │
 │  │                                                            │     │
-│  │ verify_investigation_thoroughness                          │     │
+│  │ verify_investigation_thoroughness_tool                    │     │
 │  │   Reads _tool_registry[trace_id] → real call count         │     │
 │  │   verdict = PASSED if count ≥ 3 else FAILED                │     │
 │  │   Bonus: attempts Grail DQL (graceful 401 fallback)        │     │
@@ -214,7 +214,7 @@ Open the UI: **http://localhost:8000/ui**
 
 **`agent.incident.handle`** (root): `incident.id`, `incident.severity`, `llm.model`, `llm.tokens.input`, `llm.tokens.output`, `llm.cost.usd`, `incident.attempts`, `incident.status`
 
-**`agent.phase.self_check`**: `self_check.verdict` (`PASSED`/`FAILED`), `self_check.tool_count`, `self_check.retry_triggered`, `self_check.backend`
+**`agent.phase.self_check`**: `self_check.verdict` (`PASSED`/`FAILED`), `self_check.tool_count`, `self_check.threshold`, `self_check.retry_triggered`, `self_check.backend`, `self_check.dql_attempted`, `self_check.dql_backend_result`
 
 ---
 
@@ -248,11 +248,12 @@ curl -X POST http://localhost:8000/demo/incident   # run 2–3 times
 | Tile | DQL source |
 |---|---|
 | Total Incidents Handled | `agent.incident.handle` span count |
+| Self-Check Verdicts | `self_check.verdict` pass/fail breakdown |
 | Self-Check Reinvestigation Rate | `self_check.retry_triggered` |
 | Investigation Verdicts | `self_check.verdict` distribution |
 | LLM Token Cost Over Time | `llm.cost.usd` sum by 5 min |
-| Phase Duration Breakdown | avg `duration` by `agent.phase.*` |
-| Recent Incidents | latest 20 root spans with cost + tokens |
+| Agent Investigation Phases Duration | avg `duration` by `agent.phase.*` |
+| Recent Incidents & Self-Check Status | latest 20 root spans with cost + tokens |
 
 ---
 

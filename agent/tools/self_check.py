@@ -99,8 +99,10 @@ def verify_investigation_thoroughness(trace_id: str, incident_id: str) -> dict:
         return {
             "verdict": verdict,
             "tool_count": tool_count,
+            "threshold": _MIN_TOOL_CALLS,
             "backend": backend,
+            "retry_triggered": verdict == "FAILED",
         }
 
 
-verify_investigation_thoroughness = FunctionTool(verify_investigation_thoroughness)
+verify_investigation_thoroughness_tool = FunctionTool(verify_investigation_thoroughness)
