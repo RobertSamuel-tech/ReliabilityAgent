@@ -303,10 +303,6 @@ Every trace query, log query, LLM call, self-check verdict, and reinvestigation 
 
 ---
 
-## Built For
-
-**Google Cloud Rapid Agent Hackathon 2026 — Dynatrace Track**
-
 ![Agent Flow](docs/assets/agent-flow.png)
 
 ![Self-Check Span in Dynatrace](docs/assets/self-check-span.png)
@@ -316,3 +312,10 @@ Every trace query, log query, LLM call, self-check verdict, and reinvestigation 
 **Incident → Investigation → Self-Check → Reinvestigation → Human Approval → Telemetry**
 
 ReliabilityAgent is a self-observing AI SRE that investigates incidents, audits its own reasoning, triggers reinvestigations when confidence is low, requires human approval before action, and records every decision as live Dynatrace telemetry.
+
+---
+
+## Built For
+
+**Google Cloud Rapid Agent Hackathon 2026 — Dynatrace Track**
+
