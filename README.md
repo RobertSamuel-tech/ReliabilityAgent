@@ -54,7 +54,7 @@ Observability stops being a read-only audit trail. It becomes part of the contro
 │    ├── Google ADK Runner + InMemorySessionService                   │
 │    ├── Gemini (gemini-3.1-flash-lite, configurable via GEMINI_MODEL)│
 │    ├── TRIAGE_PROMPT + INCIDENT_PROMPT_TEMPLATE                     │
-│    └── Retry loop: max_retries = 1 (one reinvestigation per run)   │
+│    └── Retry loop: max_retries = 1 (one reinvestigation per run)    │ 
 │                                                                     │
 │  TOOLS  (all wrapped as google.adk.tools.FunctionTool)              │
 │                                                                     │
@@ -85,7 +85,7 @@ Observability stops being a read-only audit trail. It becomes part of the contro
                              │ BatchSpanProcessor · OTLPSpanExporter
                              ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│  OBSERVABILITY  (observability/)                                     │
+│  OBSERVABILITY  (observability/)                                    │
 │                                                                     │
 │  TracerProvider  → OTLPSpanExporter   → /api/v2/otlp/v1/traces      │
 │  MeterProvider   → OTLPMetricExporter → /api/v2/otlp/v1/metrics     │
@@ -101,8 +101,8 @@ Observability stops being a read-only audit trail. It becomes part of the contro
 │  DYNATRACE GRAIL                                                    │
 │                                                                     │
 │  Distributed Trace Waterfall  ← agent.incident.handle root span     │
-│  Span Attribute Search        ← self_check.verdict, llm.cost.usd   │
-│  DQL Dashboard (7 tiles)      ← config/dynatrace_dashboards.json   │
+│  Span Attribute Search        ← self_check.verdict, llm.cost.usd    │
+│  DQL Dashboard (7 tiles)      ← config/dynatrace_dashboards.json    │
 │  Grail DQL self-check         ← agent reads its own spans           │
 └─────────────────────────────────────────────────────────────────────┘
 ```
