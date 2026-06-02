@@ -264,3 +264,55 @@ ReliabilityAgent/
 ├── requirements.txt
 └── .env.example
 ```
+
+---
+
+## How It Works — End to End
+
+```
+Incident
+    │
+    ▼
+Investigation
+(query_dynatrace_traces · query_gcp_logs · execute_runbook)
+    │
+    ▼
+Self-Check
+(reads own tool-call registry → verdict: PASSED / FAILED)
+    │
+    ├── PASSED ──────────────────────────┐
+    │                                   │
+    └── FAILED → Reinvestigation        │
+                (corrective prompt +    │
+                 new tool calls)        │
+                      │                 │
+                      └────────────────►▼
+                              Human Approval
+                          (/autopsy/{id}/feedback)
+                                   │
+                                   ▼
+                             Postmortem
+                      (Gemini-generated, structured)
+                                   │
+                                   ▼
+                      Dynatrace Grail Telemetry
+              (every span queryable via DQL in real time)
+```
+
+Every trace query, log query, LLM call, self-check verdict, and reinvestigation is recorded as an OpenTelemetry span in Dynatrace Grail — not after the fact, but live, as the agent reasons.
+
+---
+
+## Built For
+
+**Google Cloud Rapid Agent Hackathon 2026 — Dynatrace Track**
+
+![Agent Flow](docs/assets/agent-flow.png)
+
+![Self-Check Span in Dynatrace](docs/assets/self-check-span.png)
+
+---
+
+**Incident → Investigation → Self-Check → Reinvestigation → Human Approval → Telemetry**
+
+ReliabilityAgent is a self-observing AI SRE that investigates incidents, audits its own reasoning, triggers reinvestigations when confidence is low, requires human approval before action, and records every decision as live Dynatrace telemetry.
