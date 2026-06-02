@@ -281,12 +281,12 @@ Self-Check
 (reads own tool-call registry → verdict: PASSED / FAILED)
     │
     ├── PASSED ──────────────────────────┐
-    │                                   │
-    └── FAILED → Reinvestigation        │
-                (corrective prompt +    │
-                 new tool calls)        │
-                      │                 │
-                      └────────────────►▼
+    │                                    │
+    └── FAILED → Reinvestigation         │
+                (corrective prompt +     │
+                 new tool calls)         │
+                      │                  │
+                      └────────────────► ▼
                               Human Approval
                           (/autopsy/{id}/feedback)
                                    │
