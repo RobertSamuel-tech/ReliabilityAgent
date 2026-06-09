@@ -315,6 +315,12 @@ ReliabilityAgent is a self-observing AI SRE that investigates incidents, audits 
 
 ---
 
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
 ## Built For
 
 **Google Cloud Rapid Agent Hackathon 2026 — Dynatrace Track**
